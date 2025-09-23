@@ -8,7 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped(o => new HttpClient { 
-    BaseAddress = new Uri("https://localhost:7201/")
+    BaseAddress = new Uri("https://gateway-api-dfbk.onrender.com/ApiSeguridad/")
 });
 
 builder.Services.AddScoped<AutheService>();
