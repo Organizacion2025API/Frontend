@@ -49,3 +49,13 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* Esto va en tu archivo wwwroot/css/app.css */
+
+.background-login {
+    background-color: #D5F56E; /* Un color gris claro */
+    /* O una imagen de fondo */
+    /* background-image: url('/img/nombre-de-la-imagen.jpg'); */
+    /* background-size: cover; */
+    /* background-position: center; */
+}

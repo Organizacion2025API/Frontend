@@ -1,6 +1,10 @@
 ﻿@page "/"
+@inject AuthenticationStateProvider authStateProvider
+@layout LoginLayout
+@using ApexMagnamentFrontend.Components.Layout
 @using ApexMagnamentFrontend.DTOs
 @using ApexMagnamentFrontend.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
 @inject NavigationManager navigationManager
 @inject AutheService authService
@@ -26,7 +30,8 @@
 
         // Si el token tiene un valor, el login fue exitoso.
         await authService.SetToken(token);
-        navigationManager.NavigateTo("/Weather");
+        await authStateProvider.GetAuthenticationStateAsync();
+            navigationManager.NavigateTo("/createUser", true);
 
     }
     catch (Exception ex)
@@ -48,15 +53,15 @@
 
 </head>
 
-<body>
-    <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="card shadow-lg p-4 login-card w-75">
+<body >
+    <div class="d-flex justify-content-center align-items-center vh-100" style="background-color:#70de59">
+        <div class="card shadow-lg p-4 login-card w-50">
             <div class="login-form-section">
                 <div class="login-image-section text-center mb-4">
-                    <img src="/img/Logo.jpeg" class="img-fluid" style="max-width: 150px;">
+                    <img src="/img/Logo.jpeg" class="img-fluid" style="max-width: 150px; ">
                 </div>
                 <h2 class="text-center mb-4">Bienvenido</h2>
-                <EditForm Model="userSession" OnValidSubmit="Login">
+                <EditForm Model="userSession" OnValidSubmit="Login" >
                     <div class="mb-3">
                         <label for="userInput" class="form-label">Usuario</label>
                         <InputText class="form-control" @bind-Value="userSession.User" required />

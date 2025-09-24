@@ -2,13 +2,19 @@
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        <AuthorizeView>
+            <Authorized>
+                <NavMenu />
+            </Authorized>
+            <NotAuthorized>
+                </NotAuthorized>
+        </AuthorizeView>
     </div>
 
     <main>
-        <div class="top-row px-4">
+        @*<div class="top-row px-4">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+        </div>*@
 
         <article class="content px-4">
             @Body
