@@ -6,22 +6,43 @@ namespace ApexMagnamentFrontend.Services
 {
     public class AutheService
     {
-
-        private readonly ProtectedSessionStorage _localStore;
         private readonly HttpClient _httpClient;
+        private readonly ProtectedSessionStorage _localStore;
         private string? _token;
+        private bool _isAuthenticated = false;
 
         public AutheService(ProtectedSessionStorage localStore, HttpClient httpClient)
         {
             _localStore = localStore;
             _httpClient = httpClient;
         }
-        public async Task<bool> CrearUsuario(CreateUser createUser)
+        public async Task<string> CrearUsuario(CreateUser createUser)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/personal/", createUser);
+            try
+            {
+                // Obtener el token actual
+                var token = await GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    return "Error: No hay sesión activa. Por favor, inicie sesión.";
+                }
 
-            // Devuelve true si el código de estado es 2xx
-            return response.IsSuccessStatusCode;
+                // Agregar el token al header de la solicitud
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.PostAsJsonAsync("api/personal", createUser);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                    return null;
+
+                return $"Error {(int)response.StatusCode}: {responseContent}";
+            }
+            catch (Exception ex)
+            {
+                return $"Error de conexión: {ex.Message}";
+            }
         }
 
         public async Task<string> Login(UserSession userSesion)
@@ -61,10 +82,19 @@ namespace ApexMagnamentFrontend.Services
 
         public async Task<bool> IsAuthenticated()
         {
-            var token = await GetToken();
+            if (_isAuthenticated)
+                return true;
 
-            return !string.IsNullOrEmpty(token) && !IsTokenExpired(token);
-
+            try
+            {
+                var token = await GetToken();
+                _isAuthenticated = !string.IsNullOrEmpty(token) && !IsTokenExpired(token);
+                return _isAuthenticated;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public bool IsTokenExpired(string token)
