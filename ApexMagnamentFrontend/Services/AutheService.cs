@@ -16,6 +16,13 @@ namespace ApexMagnamentFrontend.Services
             _localStore = localStore;
             _httpClient = httpClient;
         }
+        public async Task<bool> CrearUsuario(CreateUser createUser)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/personal/", createUser);
+
+            // Devuelve true si el código de estado es 2xx
+            return response.IsSuccessStatusCode;
+        }
 
         public async Task<string> Login(UserSession userSesion)
         {
