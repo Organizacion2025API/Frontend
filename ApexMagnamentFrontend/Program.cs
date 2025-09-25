@@ -14,6 +14,8 @@ builder.Services.AddScoped(o => new HttpClient {
 builder.Services.AddScoped<AutheService>();
 builder.Services.AddScoped<UbicacionService>();
 
+builder.Services.AddScoped<CategoriaService>();
+
 
 var app = builder.Build();
 
