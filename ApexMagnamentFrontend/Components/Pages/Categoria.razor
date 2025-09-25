@@ -1,0 +1,189 @@
+﻿@page "/categorias"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@inject CategoriaService CategoriaService
+@inject AutheService AuthService
+@inject NavigationManager Navigation
+@layout MainLayout
+
+<PageTitle>Gestión de Categorías</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Gestión de Categorías</h1>
+                @if (estaAutenticado)
+                {
+                    <button class="btn btn-primary" @onclick="AbrirModalCrear">
+                        <i class="bi bi-plus-circle"></i> Nueva Categoría
+                    </button>
+                }
+            </div>
+
+            @if (!estaAutenticado)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Debe iniciar sesión para gestionar las categorías.
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lista de Categorías</h5>
+                </div>
+                <div class="card-body">
+                    @if (cargando)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando categorías...</p>
+                        </div>
+                    }
+                    else if (categorias != null && categorias.Count == 0)
+                    {
+                        <div class="text-center text-muted">
+                            <i class="bi bi-x-circle" style="font-size: 3rem;"></i>
+                            <p class="mt-2">No hay categorías registradas</p>
+                        </div>
+                    }
+                    else if (categorias != null)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var categoria in categorias)
+                                    {
+                                        <tr>
+                                            <td>@categoria.Id</td>
+                                            <td>@categoria.NombreCategoria</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> No se pudieron cargar las categorías.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Categoría</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <EditForm Model="categoriaFormulario" OnValidSubmit="GuardarCategoria">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nombreCategoria" class="form-label">Nombre de la Categoría *</label>
+                            <InputText id="nombreCategoria" class="form-control" @bind-Value="categoriaFormulario.NombreCategoria" />
+                            <ValidationMessage For="@(() => categoriaFormulario.NombreCategoria)" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Categorias>? categorias;
+    private CrearCategoria categoriaFormulario = new();
+
+    private bool mostrarModal = false;
+    private bool cargando = true;
+    private bool estaAutenticado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VerificarAutenticacion();
+        await CargarCategorias();
+    }
+
+    private async Task VerificarAutenticacion()
+    {
+        estaAutenticado = await AuthService.IsAuthenticated();
+        StateHasChanged();
+    }
+
+    private async Task CargarCategorias()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            categorias = await CategoriaService.ObtenerCategoriasAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar categorías: {ex.Message}");
+            categorias = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AbrirModalCrear()
+    {
+        categoriaFormulario = new CrearCategoria();
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+        categoriaFormulario = new CrearCategoria();
+    }
+
+    private async Task GuardarCategoria()
+    {
+        if (!estaAutenticado)
+        {
+            return;
+        }
+
+        bool resultado = await CategoriaService.CrearCategoriaAsync(categoriaFormulario);
+
+        if (resultado)
+        {
+            CerrarModal();
+            await CargarCategorias();
+        }
+        else
+        {
+            // Opcional: Manejo de error para la creación
+        }
+    }
+}
