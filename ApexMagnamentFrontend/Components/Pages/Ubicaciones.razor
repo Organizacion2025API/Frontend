@@ -1,0 +1,141 @@
+@page "/ubicaciones"
+@inject ApexMagnamentFrontend.Services.UbicacionService UbicacionService
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+
+<h3>Ubicaciones</h3>
+
+@if (cargando)
+{
+    <p>Cargando ubicaciones...</p>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <p style="color:red">@error</p>
+}
+else
+{
+    <button class="btn btn-outline-dark mb-3" @onclick="MostrarFormularioCrear">Nueva Ubicación</button>
+
+    @if (mostrarFormulario)
+    {
+        <div class="mb-3">
+            <input type="text" class="form-control" placeholder="Nombre de la ubicación" @bind="ubicacionEditar.NombreUbicacion" />
+            <button class="btn btn-outline-success mt-2" @onclick="GuardarUbicacion">Guardar</button>
+            <button class="btn btn-outline-dark mt-2 ms-2" @onclick="CancelarEdicion">Cancelar</button>
+        </div>
+    }
+
+    @if (ubicaciones.Count == 0)
+    {
+        <p>No hay ubicaciones registradas.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ubic in ubicaciones)
+                {
+                    <tr>
+                        <td>@ubic.Id</td>
+                        <td>@ubic.NombreUbicacion</td>
+                        <td>
+                            <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUbicacion(ubic))">Editar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<UbicacionDTO> ubicaciones = new();
+    private bool cargando = true;
+    private string error = string.Empty;
+
+    private bool mostrarFormulario = false;
+    private UbicacionDTO ubicacionEditar = new UbicacionDTO();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CargarUbicaciones();
+        }
+    }
+
+    private async Task CargarUbicaciones()
+    {
+        try
+        {
+            Console.WriteLine("📡 Intentando cargar ubicaciones...");
+            ubicaciones = await UbicacionService.GetAllAsync();
+            Console.WriteLine($"✅ Se cargaron {ubicaciones.Count} ubicaciones.");
+        }
+        catch (Exception ex)
+        {
+            error = $"❌ Error cargando ubicaciones: {ex.Message}";
+            Console.WriteLine(error);
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void MostrarFormularioCrear()
+    {
+        ubicacionEditar = new UbicacionDTO();
+        mostrarFormulario = true;
+    }
+
+    private void CancelarEdicion()
+    {
+        ubicacionEditar = new UbicacionDTO();
+        mostrarFormulario = false;
+    }
+
+    private void EditarUbicacion(UbicacionDTO ubic)
+    {
+        ubicacionEditar = new UbicacionDTO
+        {
+            Id = ubic.Id,
+            NombreUbicacion = ubic.NombreUbicacion
+        };
+        mostrarFormulario = true;
+    }
+
+    private async Task GuardarUbicacion()
+    {
+        if (ubicacionEditar.Id == 0)
+        {
+            // Crear nueva
+            bool exito = await UbicacionService.CreateAsync(ubicacionEditar);
+            if (!exito)
+            {
+                error = "❌ Error creando ubicación.";
+            }
+        }
+        else
+        {
+            // Actualizar existente
+            bool exito = await UbicacionService.UpdateAsync(ubicacionEditar.Id, ubicacionEditar);
+            if (!exito)
+            {
+                error = "❌ Error actualizando ubicación.";
+            }
+        }
+
+        mostrarFormulario = false;
+        await CargarUbicaciones();
+    }
+}
