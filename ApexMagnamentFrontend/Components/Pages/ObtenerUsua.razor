@@ -1,0 +1,126 @@
+﻿@page "/usuarios"
+@using ApexMagnamentFrontend.Components.Layout
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@inject AutheService autheService
+@layout MainLayout
+
+<style>
+    .custom-shadow {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+        padding: 20px;
+        background-color: #ffffff;
+        transition: transform 0.2s ease-in-out;
+        margin-top: 20px;
+    }
+
+        .custom-shadow:hover {
+            transform: translateY(-3px);
+        }
+
+    .table th,
+    .table td {
+        vertical-align: middle;
+    }
+
+    .table thead {
+        background-color: #f8f9fa;
+    }
+
+    .card-title {
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+</style>
+
+
+
+<h3>Lista de Usuarios</h3>
+
+@if (usuarios == null)
+{
+    <p><em>Cargando usuarios...</em></p>
+}
+else if (usuarios.Count == 0)
+{
+    <p><em>No hay usuarios registrados.</em></p>
+}
+else
+{
+    <div class="card custom-shadow">
+        <div class="card-body">
+            <h5 class="card-title">Usuarios Registrados</h5>
+
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Teléfono</th>
+                            <th>Correo Electrónico</th>
+                            <th>Usuario</th>
+                            <th>Status</th>
+                            <th>Fecha de Ingreso</th>
+                            <th>Fecha de Sesión</th>
+                            <th>Rol</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usuario in usuarios)
+                        {
+                            <tr>
+                                <td>@usuario.nombre</td>
+                                <td>@usuario.apellido</td>
+                                <td>@usuario.telefono</td>
+                                <td>@usuario.correo</td>
+                                <td>@usuario.user</td>
+                                <td>@usuario.status</td>
+                                <td>@usuario.fechaIngreso</td>
+                                <td>@usuario.fechaSession</td>
+                                <td>@usuario.rolId</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+
+    private List<GetUsers>? usuarios 
+    ;
+    private string error = string.Empty;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUbicaciones();
+    }
+
+    private async Task CargarUbicaciones()
+    {
+        cargando = true;
+        StateHasChanged();
+        try
+        {
+            Console.WriteLine("📡 Intentando cargar ubicaciones...");
+            usuarios = await autheService.GetUsuariosAsync();
+            Console.WriteLine($"✅ Se cargaron {usuarios.Count} usuarios.");
+        }
+        catch (Exception ex)
+        {
+            error = $"❌ Error cargando ubicaciones: {ex.Message}";
+            usuarios = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+}

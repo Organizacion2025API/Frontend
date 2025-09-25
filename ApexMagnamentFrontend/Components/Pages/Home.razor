@@ -63,11 +63,11 @@
                 <h2 class="text-center mb-4">Bienvenido</h2>
                 <EditForm Model="userSession" OnValidSubmit="Login" >
                     <div class="mb-3">
-                        <label for="userInput" class="form-label">Usuario</label>
-                        <InputText class="form-control" @bind-Value="userSession.User" required />
+                        <label for="userInput" class="form-label">Usuario:</label>
+                        <InputText class="form-control" @bind-Value="userSession.User" placeholder="Ingresa su usuario" required />
                     </div>
                     <div class="mb-3">
-                        <label for="passwordInput" class="form-label">Contraseña</label>
+                        <label for="passwordInput" class="form-label">Contraseña:</label>
                         <InputText type="password" class="form-control" @bind-Value="userSession.Password" placeholder="Ingresa su contraseña" required />
                     </div>
                     <div class="d-grid gap-2 mb-3">

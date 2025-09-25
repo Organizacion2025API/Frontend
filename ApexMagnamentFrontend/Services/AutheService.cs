@@ -1,6 +1,9 @@
 ﻿using ApexMagnamentFrontend.DTOs;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace ApexMagnamentFrontend.Services
 {
@@ -16,6 +19,57 @@ namespace ApexMagnamentFrontend.Services
             _localStore = localStore;
             _httpClient = httpClient;
         }
+
+        // Configurar token
+        private async Task<bool> ConfigurarTokenAsync()
+        {
+            var result = await _localStore.GetAsync<string>("token");
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", result.Value);
+                return true;
+            }
+            Console.WriteLine("⚠️ Token no encontrado. La API requiere autenticación.");
+            return false;
+        }
+        public async Task<List<GetUsers>> GetUsuariosAsync()
+        {
+            try
+            {
+                // Tu lógica existente para la configuración del token.
+                // Se omite por brevedad.
+                if (!await ConfigurarTokenAsync())
+                {
+                    Console.WriteLine("❌ No hay sesión activa o el token no es válido.");
+                    return new List<GetUsers>();
+                }
+
+                Console.WriteLine("📡 Intentando conectar con la API para obtener usuarios...");
+
+                // Usamos GetFromJsonAsync<T> para deserializar directamente la lista.
+                var usuarios = await _httpClient.GetFromJsonAsync<List<GetUsers>>("api/personal/");
+
+                Console.WriteLine($"✅ Se obtuvieron {usuarios.Count} usuarios.");
+                return usuarios;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"❌ Error al obtener usuarios. Código de estado: {ex.StatusCode}. Mensaje: {ex.Message}");
+                return new List<GetUsers>();
+            }
+            catch (NotSupportedException ex) // Maneja errores de deserialización
+            {
+                Console.WriteLine($"❌ Error de formato JSON: {ex.Message}");
+                return new List<GetUsers>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error inesperado al obtener usuarios: {ex.Message}");
+                return new List<GetUsers>();
+            }
+        }
+
         public async Task<string> CrearUsuario(CreateUser createUser)
         {
             try
