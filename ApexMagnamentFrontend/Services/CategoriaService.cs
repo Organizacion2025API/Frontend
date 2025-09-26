@@ -100,7 +100,46 @@ namespace ApexMagnamentFrontend.Services
                 return false;
             }
                         
-        }     
+        }
+        public async Task<bool> ActualizarCategoriaAsync(int id, CrearCategoria categoria)
+        {
+            try
+            {
+                if (!await ConfigurarTokenAsync())
+                    return false;
+
+                var url = $"{_baseUrl}/{id}";
+
+                // 🔹 Usar payload que incluya el Id
+                var payload = new
+                {
+                    Id = id,
+                    NombreCategoria = categoria.NombreCategoria
+                };
+
+                var response = await _httpClient.PutAsJsonAsync(url, payload);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al actualizar categoría: {response.StatusCode} - {error}");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Categoría actualizada correctamente.");
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción al actualizar categoría: {ex.Message}");
+                return false;
+            }
+        }
+
+
+
 
     }
 }

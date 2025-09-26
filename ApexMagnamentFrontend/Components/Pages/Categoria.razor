@@ -55,20 +55,25 @@
                     {
                         <div class="row row-cols-1 row-cols-md-3 g-4">
                             @foreach (var categoria in categorias)
-                            {
-                                <div class="col">
-                                    <div class="card shadow-sm border-0 h-100">
-                                        <div class="card-body text-center">
-                                            <div class="d-flex justify-content-center mb-3">
-                                                <span class="rounded-circle bg-dark d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                                    <i class="bi bi-layers text-white" style="font-size: 1.5rem;"></i>
-                                                </span>
-                                            </div>
-                                            <h5 class="card-title mt-3">@categoria.NombreCategoria</h5>
-                                            <p class="text-muted">ID: @categoria.Id</p>
-                                        </div>
+                            {                               
+                                <div class="card-body text-center">
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <span class="rounded-circle bg-dark d-flex align-items-center justify-content-center"
+                                              style="width: 60px; height: 60px;">
+                                            <i class="bi bi-layers text-white" style="font-size: 1.5rem;"></i>
+                                        </span>
                                     </div>
+                                    <h5 class="card-title mt-3">@categoria.NombreCategoria</h5>
+                                    <p class="text-muted">ID: @categoria.Id</p>
+
+                                    @if (estaAutenticado)
+                                    {
+                                        <button class="btn btn-sm btn-warning me-2" @onclick="() => AbrirModalEditar(categoria)">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                    }
                                 </div>
+
                             }
                         </div>
                     }
@@ -86,36 +91,39 @@
 
 @if (mostrarModal)
 {
-    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nueva Categoría</h5>
+                    <h5 class="modal-title">@(editando ? "Editar Categoría" : "Nueva Categoría")</h5>
                     <button type="button" class="btn-close" @onclick="CerrarModal"></button>
                 </div>
-                <EditForm Model="categoriaFormulario" OnValidSubmit="GuardarCategoria">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="nombreCategoria" class="form-label">Nombre de la Categoría *</label>
-                            <InputText id="nombreCategoria" class="form-control" @bind-Value="categoriaFormulario.NombreCategoria" />
-                            <ValidationMessage For="@(() => categoriaFormulario.NombreCategoria)" />
-                        </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Categoría</label>
+                        <input type="text" class="form-control" @bind="categoriaFormulario.NombreCategoria" />
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear</button>
-                    </div>
-                </EditForm>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn btn-primary" @onclick="GuardarCategoria">
+                        @(editando ? "Guardar Cambios" : "Crear")
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 }
 
+
+
 @code {
     private List<Categorias>? categorias;
     private CrearCategoria categoriaFormulario = new();
+
+    private bool editando = false;
+    private int categoriaIdSeleccionada;
+
 
     private bool mostrarModal = false;
     private bool cargando = true;
@@ -164,25 +172,55 @@
     {
         mostrarModal = false;
         categoriaFormulario = new CrearCategoria();
+        editando = false;
     }
+
+    private void AbrirModalEditar(Categorias categoria)
+    {
+        categoriaIdSeleccionada = categoria.Id;
+        categoriaFormulario = new CrearCategoria
+            {
+                NombreCategoria = categoria.NombreCategoria
+            };
+        editando = true;
+        mostrarModal = true;
+    }
+
 
     private async Task GuardarCategoria()
     {
+        Console.WriteLine($"Guardando categoria, editando={editando}, Id={categoriaIdSeleccionada}");
+
         if (!estaAutenticado)
-        {
             return;
-        }
 
-        bool resultado = await CategoriaService.CrearCategoriaAsync(categoriaFormulario);
+        bool resultado;
+        try
+        {
+            if (editando)
+            {
+                resultado = await CategoriaService.ActualizarCategoriaAsync(categoriaIdSeleccionada, categoriaFormulario);
+            }
+            else
+            {
+                resultado = await CategoriaService.CrearCategoriaAsync(categoriaFormulario);
+            }
 
-        if (resultado)
-        {
-            CerrarModal();
-            await CargarCategorias();
+            if (resultado)
+            {
+                CerrarModal();
+                await CargarCategorias();
+            }
+            else
+            {
+                Console.WriteLine("No se pudo guardar la categoría");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // Opcional: Manejo de error para la creación
+            Console.WriteLine($"Error al guardar categoría: {ex.Message}");
         }
     }
+
+
 }
