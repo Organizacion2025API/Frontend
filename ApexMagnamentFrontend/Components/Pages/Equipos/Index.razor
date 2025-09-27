@@ -1,0 +1,61 @@
+@page "/equipos"
+@inject EquipoService EquipoService
+
+<h3>📋 Lista de Equipos</h3>
+
+<button class="btn btn-primary mb-3" @onclick="IrACrear">➕ Nuevo Equipo</button>
+
+@if (equipos == null)
+{
+    <p>⏳ Cargando equipos...</p>
+}
+else if (!equipos.Any())
+{
+    <p>No hay equipos registrados.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Modelo</th>
+                <th>N° Serie</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var eq in equipos)
+        {
+            <tr>
+                <td>@eq.Nombre</td>
+                <td>@eq.Modelo</td>
+                <td>@eq.NSerie</td>
+                <td>@eq.CategoriaNombre</td>
+                <td>@eq.UbicacionNombre</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" @onclick="() => IrAEditar(eq.Id)">✏️ Editar</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => IrAEliminar(eq.Id)">🗑️ Eliminar</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<EquipoDTO> equipos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("📡 Cargando equipos...");
+        equipos = await EquipoService.GetAllAsync();
+        Console.WriteLine($"✅ Se cargaron {equipos.Count} equipos.");
+    }
+
+    void IrACrear() => NavigationManager.NavigateTo("/equipos/create");
+    void IrAEditar(int id) => NavigationManager.NavigateTo($"/equipos/edit/{id}");
+    void IrAEliminar(int id) => NavigationManager.NavigateTo($"/equipos/delete/{id}");
+}
