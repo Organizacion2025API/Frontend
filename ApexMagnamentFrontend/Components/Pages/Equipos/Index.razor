@@ -1,4 +1,7 @@
 @page "/equipos"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@inject NavigationManager NavigationManager   
 @inject EquipoService EquipoService
 
 <h3>📋 Lista de Equipos</h3>
@@ -33,8 +36,8 @@ else
                 <td>@eq.Nombre</td>
                 <td>@eq.Modelo</td>
                 <td>@eq.NSerie</td>
-                <td>@eq.CategoriaNombre</td>
-                <td>@eq.UbicacionNombre</td>
+                <td>@eq.CategoriaId</td>
+                <td>@eq.UbicacionId</td>
                 <td>
                     <button class="btn btn-sm btn-warning" @onclick="() => IrAEditar(eq.Id)">✏️ Editar</button>
                     <button class="btn btn-sm btn-danger" @onclick="() => IrAEliminar(eq.Id)">🗑️ Eliminar</button>
@@ -46,7 +49,7 @@ else
 }
 
 @code {
-    private List<EquipoDTO> equipos;
+    private List<EquipoDTO>? equipos;
 
     protected override async Task OnInitializedAsync()
     {

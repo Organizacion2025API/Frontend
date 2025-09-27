@@ -1,4 +1,6 @@
 @page "/equipos/edit/{id:int}"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
 @inject EquipoService EquipoService
 @inject CategoriaService CategoriaService
 @inject UbicacionService UbicacionService
@@ -52,7 +54,7 @@ else
                 <option value="">-- Seleccionar --</option>
                 @foreach (var cat in categorias)
                 {
-                    <option value="@cat.Id">@cat.Nombre</option>
+                    <option value="@cat.Id">@cat.NombreCategoria</option>
                 }
             </InputSelect>
         </div>
@@ -75,13 +77,13 @@ else
 
 @code {
     [Parameter] public int id { get; set; }
-    private EditarEquipoDTO equipo;
-    private List<CategoriaDTO> categorias = new();
+    private EditarEquipoDTO equipo = new EditarEquipoDTO();
+    private List<Categorias> categorias = new();
     private List<UbicacionDTO> ubicaciones = new();
 
     protected override async Task OnInitializedAsync()
     {
-        categorias = await CategoriaService.GetAllAsync();
+        categorias = await CategoriaService.ObtenerCategoriasAsync();
         ubicaciones = await UbicacionService.GetAllAsync();
 
         var lista = await EquipoService.GetAllAsync();
@@ -97,15 +99,15 @@ else
                 Descripcion = encontrado.Descripcion,
                 Garantia = encontrado.Garantia,
                 Img = encontrado.Img,
-                CategoriaId = categorias.FirstOrDefault(c => c.Nombre == encontrado.CategoriaNombre)?.Id ?? 0,
-                UbicacionId = ubicaciones.FirstOrDefault(u => u.NombreUbicacion == encontrado.UbicacionNombre)?.Id ?? 0
+                CategoriaId = encontrado.CategoriaId ?? 0,
+                UbicacionId = encontrado.UbicacionId ?? 0
             };
         }
     }
 
     private async Task Guardar()
     {
-        var ok = await EquipoService.UpdateAsync(equipo);
+        var ok = await EquipoService.UpdateAsync(equipo.Id, equipo);
         if (ok)
         {
             Console.WriteLine("✅ Equipo editado correctamente.");

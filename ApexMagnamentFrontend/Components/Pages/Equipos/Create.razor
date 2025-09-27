@@ -1,4 +1,6 @@
 @page "/equipos/create"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
 @inject EquipoService EquipoService
 @inject CategoriaService CategoriaService
 @inject UbicacionService UbicacionService
@@ -43,10 +45,10 @@
     <div class="mb-3">
         <label>Categoría</label>
         <InputSelect class="form-select" @bind-Value="nuevo.CategoriaId">
-            <option value="">-- Seleccionar --</option>
+            <option value="0">-- Seleccionar --</option>
             @foreach (var cat in categorias)
             {
-                <option value="@cat.Id">@cat.Nombre</option>
+                <option value="@cat.Id">@cat.NombreCategoria</option>
             }
         </InputSelect>
     </div>
@@ -54,7 +56,7 @@
     <div class="mb-3">
         <label>Ubicación</label>
         <InputSelect class="form-select" @bind-Value="nuevo.UbicacionId">
-            <option value="">-- Seleccionar --</option>
+            <option value="0">-- Seleccionar --</option>
             @foreach (var ubi in ubicaciones)
             {
                 <option value="@ubi.Id">@ubi.NombreUbicacion</option>
@@ -67,13 +69,13 @@
 </EditForm>
 
 @code {
-    private CrearEquipoDTO nuevo = new();
-    private List<CategoriaDTO> categorias = new();
+    private CrearEquipoDTO nuevo = new CrearEquipoDTO();
+    private List<Categorias> categorias = new();
     private List<UbicacionDTO> ubicaciones = new();
 
     protected override async Task OnInitializedAsync()
     {
-        categorias = await CategoriaService.GetAllAsync();
+        categorias = await CategoriaService.ObtenerCategoriasAsync();
         ubicaciones = await UbicacionService.GetAllAsync();
     }
 
@@ -91,6 +93,5 @@
         }
     }
 
-    void Cancelar() => NavigationManager.NavigateTo("/equipos");
+    private void Cancelar() => NavigationManager.NavigateTo("/equipos");
 }
-

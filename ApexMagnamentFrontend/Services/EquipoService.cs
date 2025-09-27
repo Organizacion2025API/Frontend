@@ -7,7 +7,7 @@ namespace ApexMagnamentFrontend.Services
     public class EquipoService
     {
         private readonly HttpClient _http;
-        private readonly string _baseUrl = "https://gateway-api-dfbk.onrender.com/ApiAdministracion/api/equipos"; 
+        private readonly string _baseUrl = "https://gateway-api-dfbk.onrender.com/ApiAdministracion/api/equipos";
         private string? _token;
 
         public EquipoService(HttpClient http)
@@ -17,18 +17,18 @@ namespace ApexMagnamentFrontend.Services
 
         public void SetToken(string token) => _token = token;
 
-        private async Task<bool> ConfigurarTokenAsync()
+        private Task<bool> ConfigurarTokenAsync()
         {
             if (string.IsNullOrEmpty(_token))
             {
                 Console.WriteLine("⚠️ Token no encontrado. La API requiere autenticación.");
-                return false;
+                return Task.FromResult(false);
             }
 
             _http.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _token);
 
-            return true;
+            return Task.FromResult(true);
         }
 
         // 🔹 Obtener todos los equipos
@@ -72,7 +72,7 @@ namespace ApexMagnamentFrontend.Services
         }
 
         // 🔹 Crear equipo
-        public async Task<bool> CreateAsync(EquipoDTO nuevo)
+        public async Task<bool> CreateAsync(CrearEquipoDTO nuevo)
         {
             if (!await ConfigurarTokenAsync()) return false;
 
@@ -92,7 +92,7 @@ namespace ApexMagnamentFrontend.Services
         }
 
         // 🔹 Editar equipo
-        public async Task<bool> UpdateAsync(int id, EquipoDTO actualizado)
+        public async Task<bool> UpdateAsync(int id, EditarEquipoDTO actualizado)
         {
             if (!await ConfigurarTokenAsync()) return false;
 
