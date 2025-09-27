@@ -5,6 +5,9 @@
 @inject CategoriaService CategoriaService
 @inject AutheService AuthService
 @inject NavigationManager Navigation
+
+@inject IJSRuntime JS
+
 @layout MainLayout
 
 <PageTitle>Gestión de Categorías</PageTitle>
@@ -71,6 +74,11 @@
                                         <button class="btn btn-sm btn-warning me-2" @onclick="() => AbrirModalEditar(categoria)">
                                             <i class="bi bi-pencil"></i> Editar
                                         </button>
+
+                                        <button class="btn btn-sm btn-danger" @onclick="() => AbrirModalEliminar(categoria)">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+
                                     }
                                 </div>
 
@@ -114,6 +122,27 @@
         </div>
     </div>
 }
+@if (mostrarModalEliminar)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalEliminar"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                    <p class="mt-3">¿Está seguro que desea eliminar la categoría <strong>@nombreCategoriaAEliminar</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModalEliminar">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminar">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 
 
@@ -128,6 +157,10 @@
     private bool mostrarModal = false;
     private bool cargando = true;
     private bool estaAutenticado = false;
+
+    private bool mostrarModalEliminar = false;
+    private int categoriaIdAEliminar;
+    private string? nombreCategoriaAEliminar;
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,6 +254,36 @@
             Console.WriteLine($"Error al guardar categoría: {ex.Message}");
         }
     }
+
+    private void AbrirModalEliminar(Categorias categoria)
+    {
+        categoriaIdAEliminar = categoria.Id;
+        nombreCategoriaAEliminar = categoria.NombreCategoria;
+        mostrarModalEliminar = true;
+    }
+
+    private void CerrarModalEliminar()
+    {
+        mostrarModalEliminar = false;
+        categoriaIdAEliminar = 0;
+        nombreCategoriaAEliminar = null;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        bool resultado = await CategoriaService.EliminarCategoriaAsync(categoriaIdAEliminar);
+        if (resultado)
+        {
+            await CargarCategorias();
+        }
+        else
+        {
+            Console.WriteLine("No se pudo eliminar la categoría");
+        }
+
+        CerrarModalEliminar();
+    }
+
 
 
 }
