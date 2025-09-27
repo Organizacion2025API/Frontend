@@ -138,6 +138,34 @@ namespace ApexMagnamentFrontend.Services
             }
         }
 
+        public async Task<bool> EliminarCategoriaAsync(int id)
+        {
+            try
+            {
+                if (!await ConfigurarTokenAsync())
+                    return false;
+
+                var url = $"{_baseUrl}/{id}";
+                var response = await _httpClient.DeleteAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al eliminar categoría: {response.StatusCode} - {error}");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Categoría eliminada correctamente.");
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción al eliminar categoría: {ex.Message}");
+                return false;
+            }
+        }
 
 
 
