@@ -48,45 +48,37 @@ else if (usuarios.Count == 0)
 }
 else
 {
-    <div class="card custom-shadow">
-        <div class="card-body">
-            <h5 class="card-title">Usuarios Registrados</h5>
-
-            <div class="table-responsive">
-                <table class="table table-bordered mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Teléfono</th>
-                            <th>Correo Electrónico</th>
-                            <th>Usuario</th>
-                            <th>Status</th>
-                            <th>Fecha de Ingreso</th>
-                            <th>Fecha de Sesión</th>
-                            <th>Rol</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var usuario in usuarios)
-                        {
-                            <tr>
-                                <td>@usuario.nombre</td>
-                                <td>@usuario.apellido</td>
-                                <td>@usuario.telefono</td>
-                                <td>@usuario.correo</td>
-                                <td>@usuario.user</td>
-                                <td>@usuario.status</td>
-                                <td>@usuario.fechaIngreso</td>
-                                <td>@usuario.fechaSession</td>
-                                <td>@usuario.rolId</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Correo Electrónico</th>
+                <th>Usuario</th>
+                <th>Status</th>
+                <th>Fecha de Ingreso</th>
+                <th>Fecha de Sesión</th>
+                <th>Rol</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in usuarios)
+            {
+                <tr>
+                    <td>@usuario.nombre</td>
+                    <td>@usuario.apellido</td>
+                    <td>@usuario.telefono</td>
+                    <td>@usuario.correo</td>
+                    <td>@usuario.user</td>
+                    <td>@usuario.status</td>
+                    <td>@usuario.fechaIngreso</td>
+                    <td>@usuario.fechaSession</td>
+                    <td>@usuario.rolId</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 
 
