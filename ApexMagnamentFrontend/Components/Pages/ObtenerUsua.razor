@@ -75,10 +75,14 @@ else
                     <td>@usuario.fechaIngreso</td>
                     <td>@usuario.fechaSession</td>
                     <td>@usuario.rolId</td>
+                    <td>
+                        <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUsuario(usuario))">Editar</button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
+
 }
 
 
@@ -88,13 +92,14 @@ else
     ;
     private string error = string.Empty;
     private bool cargando = true;
+    private GetUsers usuarioEditar = new GetUsers();
 
     protected override async Task OnInitializedAsync()
     {
-        await CargarUbicaciones();
+        await CargarUsuarios();
     }
 
-    private async Task CargarUbicaciones()
+    private async Task CargarUsuarios()
     {
         cargando = true;
         StateHasChanged();
@@ -114,5 +119,28 @@ else
             cargando = false;
             StateHasChanged();
         }
+    }
+
+    private void CancelarEdicion()
+    {
+        usuarioEditar = new GetUsers();
+        cargando = false;
+    }
+
+    private void EditarUsuario(GetUsers usuario)
+    {
+        usuarioEditar = new GetUsers
+        {
+           nombre = usuario.nombre,
+           apellido = usuario.apellido,
+           telefono = usuario.telefono,
+           correo = usuario.correo,
+           user = usuario.user,
+           status = usuario.status,
+           fechaIngreso = usuario.fechaIngreso,
+           fechaSession = usuario.fechaSession,
+           rolId = usuario.rolId
+        };
+        cargando = true;
     }
 }
