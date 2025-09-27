@@ -1,0 +1,121 @@
+@page "/equipos/edit/{id:int}"
+@inject EquipoService EquipoService
+@inject CategoriaService CategoriaService
+@inject UbicacionService UbicacionService
+@inject NavigationManager NavigationManager
+
+<h3>✏️ Editar Equipo</h3>
+
+@if (equipo == null)
+{
+    <p>⏳ Cargando equipo...</p>
+}
+else
+{
+    <EditForm Model="equipo" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Nombre</label>
+            <InputText class="form-control" @bind-Value="equipo.Nombre" />
+        </div>
+
+        <div class="mb-3">
+            <label>Modelo</label>
+            <InputText class="form-control" @bind-Value="equipo.Modelo" />
+        </div>
+
+        <div class="mb-3">
+            <label>N° Serie</label>
+            <InputText class="form-control" @bind-Value="equipo.NSerie" />
+        </div>
+
+        <div class="mb-3">
+            <label>Descripción</label>
+            <InputText class="form-control" @bind-Value="equipo.Descripcion" />
+        </div>
+
+        <div class="mb-3">
+            <label>Garantía (meses)</label>
+            <InputNumber class="form-control" @bind-Value="equipo.Garantia" />
+        </div>
+
+        <div class="mb-3">
+            <label>Imagen (URL)</label>
+            <InputText class="form-control" @bind-Value="equipo.Img" />
+        </div>
+
+        <div class="mb-3">
+            <label>Categoría</label>
+            <InputSelect class="form-select" @bind-Value="equipo.CategoriaId">
+                <option value="">-- Seleccionar --</option>
+                @foreach (var cat in categorias)
+                {
+                    <option value="@cat.Id">@cat.Nombre</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label>Ubicación</label>
+            <InputSelect class="form-select" @bind-Value="equipo.UbicacionId">
+                <option value="">-- Seleccionar --</option>
+                @foreach (var ubi in ubicaciones)
+                {
+                    <option value="@ubi.Id">@ubi.NombreUbicacion</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-success">💾 Guardar</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar">❌ Cancelar</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+    private EditarEquipoDTO equipo;
+    private List<CategoriaDTO> categorias = new();
+    private List<UbicacionDTO> ubicaciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await CategoriaService.GetAllAsync();
+        ubicaciones = await UbicacionService.GetAllAsync();
+
+        var lista = await EquipoService.GetAllAsync();
+        var encontrado = lista.FirstOrDefault(e => e.Id == id);
+        if (encontrado != null)
+        {
+            equipo = new EditarEquipoDTO
+            {
+                Id = encontrado.Id,
+                Nombre = encontrado.Nombre,
+                Modelo = encontrado.Modelo,
+                NSerie = encontrado.NSerie,
+                Descripcion = encontrado.Descripcion,
+                Garantia = encontrado.Garantia,
+                Img = encontrado.Img,
+                CategoriaId = categorias.FirstOrDefault(c => c.Nombre == encontrado.CategoriaNombre)?.Id ?? 0,
+                UbicacionId = ubicaciones.FirstOrDefault(u => u.NombreUbicacion == encontrado.UbicacionNombre)?.Id ?? 0
+            };
+        }
+    }
+
+    private async Task Guardar()
+    {
+        var ok = await EquipoService.UpdateAsync(equipo);
+        if (ok)
+        {
+            Console.WriteLine("✅ Equipo editado correctamente.");
+            NavigationManager.NavigateTo("/equipos");
+        }
+        else
+        {
+            Console.WriteLine("❌ Error al editar equipo.");
+        }
+    }
+
+    void Cancelar() => NavigationManager.NavigateTo("/equipos");
+}

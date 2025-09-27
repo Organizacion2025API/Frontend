@@ -1,0 +1,45 @@
+@page "/equipos/delete/{id:int}"
+@inject EquipoService EquipoService
+@inject NavigationManager NavigationManager
+
+<h3>🗑️ Eliminar Equipo</h3>
+
+@if (equipo == null)
+{
+    <p>⏳ Cargando equipo...</p>
+}
+else
+{
+    <div class="alert alert-danger">
+        <p>¿Seguro que deseas eliminar el equipo <strong>@equipo.Nombre</strong> (Modelo: @equipo.Modelo)?</p>
+        <button class="btn btn-danger" @onclick="Confirmar">Sí, eliminar</button>
+        <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+    private EquipoDTO equipo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var lista = await EquipoService.GetAllAsync();
+        equipo = lista.FirstOrDefault(e => e.Id == id);
+    }
+
+    private async Task Confirmar()
+    {
+        var ok = await EquipoService.DeleteAsync(id);
+        if (ok)
+        {
+            Console.WriteLine("✅ Equipo eliminado correctamente.");
+        }
+        else
+        {
+            Console.WriteLine("❌ Error al eliminar equipo.");
+        }
+        NavigationManager.NavigateTo("/equipos");
+    }
+
+    void Cancelar() => NavigationManager.NavigateTo("/equipos");
+}

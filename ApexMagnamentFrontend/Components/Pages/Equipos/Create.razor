@@ -1,0 +1,96 @@
+@page "/equipos/create"
+@inject EquipoService EquipoService
+@inject CategoriaService CategoriaService
+@inject UbicacionService UbicacionService
+@inject NavigationManager NavigationManager
+
+<h3>➕ Crear Equipo</h3>
+
+<EditForm Model="nuevo" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Nombre</label>
+        <InputText class="form-control" @bind-Value="nuevo.Nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label>Modelo</label>
+        <InputText class="form-control" @bind-Value="nuevo.Modelo" />
+    </div>
+
+    <div class="mb-3">
+        <label>N° Serie</label>
+        <InputText class="form-control" @bind-Value="nuevo.NSerie" />
+    </div>
+
+    <div class="mb-3">
+        <label>Descripción</label>
+        <InputText class="form-control" @bind-Value="nuevo.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label>Garantía (meses)</label>
+        <InputNumber class="form-control" @bind-Value="nuevo.Garantia" />
+    </div>
+
+    <div class="mb-3">
+        <label>Imagen (URL)</label>
+        <InputText class="form-control" @bind-Value="nuevo.Img" />
+    </div>
+
+    <div class="mb-3">
+        <label>Categoría</label>
+        <InputSelect class="form-select" @bind-Value="nuevo.CategoriaId">
+            <option value="">-- Seleccionar --</option>
+            @foreach (var cat in categorias)
+            {
+                <option value="@cat.Id">@cat.Nombre</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label>Ubicación</label>
+        <InputSelect class="form-select" @bind-Value="nuevo.UbicacionId">
+            <option value="">-- Seleccionar --</option>
+            @foreach (var ubi in ubicaciones)
+            {
+                <option value="@ubi.Id">@ubi.NombreUbicacion</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-success">✅ Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancelar">❌ Cancelar</button>
+</EditForm>
+
+@code {
+    private CrearEquipoDTO nuevo = new();
+    private List<CategoriaDTO> categorias = new();
+    private List<UbicacionDTO> ubicaciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await CategoriaService.GetAllAsync();
+        ubicaciones = await UbicacionService.GetAllAsync();
+    }
+
+    private async Task Guardar()
+    {
+        var ok = await EquipoService.CreateAsync(nuevo);
+        if (ok)
+        {
+            Console.WriteLine("✅ Equipo creado correctamente.");
+            NavigationManager.NavigateTo("/equipos");
+        }
+        else
+        {
+            Console.WriteLine("❌ Error al crear equipo.");
+        }
+    }
+
+    void Cancelar() => NavigationManager.NavigateTo("/equipos");
+}
+
