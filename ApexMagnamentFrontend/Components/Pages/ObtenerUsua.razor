@@ -34,15 +34,21 @@
     }
 </style>
 
-
-
 <h3>Lista de Usuarios</h3>
 
-@if (usuarios == null)
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+@* Tabla de usuarios *@
+@if (cargando)
 {
     <p><em>Cargando usuarios...</em></p>
 }
-else if (usuarios.Count == 0)
+else if (usuarios == null || !usuarios.Any())
 {
     <p><em>No hay usuarios registrados.</em></p>
 }
@@ -60,6 +66,7 @@ else
                 <th>Fecha de Ingreso</th>
                 <th>Fecha de Sesión</th>
                 <th>Rol</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -82,17 +89,49 @@ else
             }
         </tbody>
     </table>
+}
 
+@* Formulario de Edición *@
+@if (mostrarFormulario)
+{
+    <div class="custom-shadow mt-4">
+        <h4>Editar usuario</h4>
+
+        <EditForm Model="@usuarioEditar" OnValidSubmit="GuardarCambios">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="nombre">Nombre</label>
+                <InputText class="form-control" id="nombre" @bind-Value="usuarioEditar.nombre" />
+            </div>
+            <div class="mb-3">
+                <label for="apellido">Apellido</label>
+                <InputText class="form-control" id="apellido" @bind-Value="usuarioEditar.apellido" />
+            </div>
+            <div class="mb-3">
+                <label for="telefono">Teléfono</label>
+                <InputText class="form-control" id="telefono" @bind-Value="usuarioEditar.telefono" />
+            </div>
+            <div class="mb-3">
+                <label for="correo">Correo</label>
+                <InputText class="form-control" id="correo" @bind-Value="usuarioEditar.correo" />
+            </div>
+
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick="CancelarEdicion">Cancelar</button>
+        </EditForm>
+    </div>
 }
 
 
 @code {
 
-    private List<GetUsers>? usuarios 
-    ;
+    private List<GetUsers>? usuarios;
     private string error = string.Empty;
     private bool cargando = true;
     private GetUsers usuarioEditar = new GetUsers();
+    private bool mostrarFormulario = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,13 +144,11 @@ else
         StateHasChanged();
         try
         {
-            Console.WriteLine("📡 Intentando cargar ubicaciones...");
             usuarios = await autheService.GetUsuariosAsync();
-            Console.WriteLine($"✅ Se cargaron {usuarios.Count} usuarios.");
         }
         catch (Exception ex)
         {
-            error = $"❌ Error cargando ubicaciones: {ex.Message}";
+            error = $"❌ Error cargando usuarios: {ex.Message}";
             usuarios = null;
         }
         finally
@@ -121,26 +158,45 @@ else
         }
     }
 
+    private void EditarUsuario(GetUsers usuario)
+    {
+        // Crea una copia del objeto para evitar modificar la lista original directamente
+        usuarioEditar = new GetUsers
+        {
+            Id = usuario.Id, // <-- Asegúrate de que esta línea esté correcta
+            nombre = usuario.nombre,
+            apellido = usuario.apellido,
+            telefono = usuario.telefono,
+            correo = usuario.correo,
+            user = usuario.user,
+            status = usuario.status,
+            fechaIngreso = usuario.fechaIngreso,
+            fechaSession = usuario.fechaSession,
+            rolId = usuario.rolId
+        };
+        mostrarFormulario = true;
+        error = string.Empty; // Limpia cualquier error anterior
+    }
+
     private void CancelarEdicion()
     {
         usuarioEditar = new GetUsers();
-        cargando = false;
+        mostrarFormulario = false;
+        error = string.Empty;
     }
 
-    private void EditarUsuario(GetUsers usuario)
+    private async Task GuardarCambios()
     {
-        usuarioEditar = new GetUsers
+        var resultado = await autheService.UpdateUsuarioAsync(usuarioEditar);
+
+        if (string.IsNullOrEmpty(resultado))
         {
-           nombre = usuario.nombre,
-           apellido = usuario.apellido,
-           telefono = usuario.telefono,
-           correo = usuario.correo,
-           user = usuario.user,
-           status = usuario.status,
-           fechaIngreso = usuario.fechaIngreso,
-           fechaSession = usuario.fechaSession,
-           rolId = usuario.rolId
-        };
-        cargando = true;
+            await CargarUsuarios();
+            CancelarEdicion();
+        }
+        else
+        {
+            error = resultado;
+        }
     }
 }

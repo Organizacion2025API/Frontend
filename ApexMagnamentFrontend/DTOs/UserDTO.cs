@@ -13,6 +13,7 @@ namespace ApexMagnamentFrontend.DTOs
 
     public class CreateUser
     {
+        
         [JsonPropertyName("nombre")]
         public string nombre { get; set; } = null!;
 
@@ -46,7 +47,7 @@ namespace ApexMagnamentFrontend.DTOs
 
     public class GetUsers
     {
-      
+        public int Id { get; set; }
         public string nombre { get; set; } = null!;
 
         public string apellido { get; set; } = null!;

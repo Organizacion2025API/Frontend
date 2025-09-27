@@ -163,5 +163,32 @@ namespace ApexMagnamentFrontend.Services
             await _localStore.DeleteAsync("token");
 
         }
+
+        public async Task<string> UpdateUsuarioAsync(GetUsers usuario)
+        {
+            try
+            {
+                // Configurar el token
+                if (!await ConfigurarTokenAsync())
+                {
+                    return "Error: No hay sesión activa. Por favor, inicie sesión.";
+                }
+
+                // Enviar la solicitud PUT a la API
+                var response = await _httpClient.PutAsJsonAsync($"api/personal/{usuario.Id}", usuario);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return null; // Éxito
+                }
+
+                return $"Error {(int)response.StatusCode}: {responseContent}"; // Falla
+            }
+            catch (Exception ex)
+            {
+                return $"Error de conexión: {ex.Message}";
+            }
+        }
     }
 }
