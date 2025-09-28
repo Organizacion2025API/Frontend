@@ -47,6 +47,20 @@
                             <p class="mt-2">Cargando categorías...</p>
                         </div>
                     }
+                    else
+                    {
+                        <div class="input-group mb-3">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Buscar por ID o Nombre de Categoría..."
+                                   @bind="idBuscarTexto" @bind:event="oninput" />
+                        </div>
+
+                        @if (categorias == null)
+                        {
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> No se pudieron cargar las categorías.
+                            </div>
+                        }
                     else if (categorias != null && categorias.Count == 0)
                     {
                         <div class="text-center text-muted">
@@ -54,10 +68,12 @@
                             <p class="mt-2">No hay categorías registradas</p>
                         </div>
                     }
-                    else if (categorias != null)
-                    {
+                    else
+                    {                      
                         <div class="row row-cols-1 row-cols-md-3 g-4">
-                            @foreach (var categoria in categorias)
+                                @foreach (var categoria in categorias.Where(c => string.IsNullOrEmpty(idBuscarTexto)
+                               || c.Id.ToString().Contains(idBuscarTexto, StringComparison.OrdinalIgnoreCase)
+                               || (c.NombreCategoria != null && c.NombreCategoria.Contains(idBuscarTexto, StringComparison.OrdinalIgnoreCase))))
                             {                               
                                 <div class="card-body text-center">
                                     <div class="d-flex justify-content-center mb-3">
@@ -85,12 +101,7 @@
                             }
                         </div>
                     }
-                    else
-                    {
-                        <div class="alert alert-danger">
-                            <strong>Error:</strong> No se pudieron cargar las categorías.
-                        </div>
-                    }
+                    }                  
                 </div>
             </div>
         </div>
@@ -147,20 +158,27 @@
 
 
 @code {
+    // Datos y servicios
     private List<Categorias>? categorias;
     private CrearCategoria categoriaFormulario = new();
 
+    // Estado de edición
     private bool editando = false;
     private int categoriaIdSeleccionada;
 
-
+    // Modal de creación/edición
     private bool mostrarModal = false;
     private bool cargando = true;
     private bool estaAutenticado = false;
 
+    //Modal de confirmación de eliminación
     private bool mostrarModalEliminar = false;
     private int categoriaIdAEliminar;
     private string? nombreCategoriaAEliminar;
+
+    //Filtros de búsqueda
+    private string idBuscarTexto = string.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
