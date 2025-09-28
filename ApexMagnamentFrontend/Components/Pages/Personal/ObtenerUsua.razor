@@ -3,6 +3,7 @@
 @using ApexMagnamentFrontend.DTOs
 @using ApexMagnamentFrontend.Services
 @inject AutheService autheService
+@inject NavigationManager NavigationManager
 @layout MainLayout
 
 <style>
@@ -15,9 +16,9 @@
         margin-top: 20px;
     }
 
-    .custom-shadow:hover {
-        transform: translateY(-3px);
-    }
+        .custom-shadow:hover {
+            transform: translateY(-3px);
+        }
 
     .table th,
     .table td {
@@ -66,19 +67,27 @@
     </div>
 }
 
+@* Filtro de búsqueda *@
+<div class="col-sm-6 col-md-4 col-lg-3">
+    <label for="filtro">Buscar usuario por ID o nombre:</label>
+    <input type="text" class="form-control" @bind="filtroBusqueda" @bind:event="oninput" placeholder="Escribe ID o nombre..." />
+</div>
+
 @if (cargando)
 {
     <p><em>Cargando usuarios...</em></p>
 }
-else if (usuarios == null || !usuarios.Any())
+else if (usuariosFiltrados == null || !usuariosFiltrados.Any())
 {
-    <p><em>No hay usuarios registrados.</em></p>
+    <p><em>No se encontraron usuarios que coincidan con la búsqueda.</em></p>
 }
 else
 {
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>Acciones</th>
+                <th>ID</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>Teléfono</th>
@@ -88,13 +97,16 @@ else
                 <th>Fecha de Ingreso</th>
                 <th>Fecha de Sesión</th>
                 <th>Rol</th>
-                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var usuario in usuarios)
+            @foreach (var usuario in usuariosFiltrados)
             {
                 <tr>
+                    <td>
+                        <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUsuario(usuario))">Acciones</button>
+                    </td>
+                    <td>@usuario.id</td>
                     <td>@usuario.nombre</td>
                     <td>@usuario.apellido</td>
                     <td>@usuario.telefono</td>
@@ -104,9 +116,7 @@ else
                     <td>@usuario.fechaIngreso?.ToShortDateString()</td>
                     <td>@usuario.fechaSession?.ToShortDateString()</td>
                     <td>@usuario.rolId</td>
-                    <td>
-                        <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUsuario(usuario))">Editar</button>
-                    </td>
+                   
                 </tr>
             }
         </tbody>
@@ -143,9 +153,16 @@ else
                         <label for="correo">Correo</label>
                         <InputText class="form-control" id="correo" @bind-Value="usuarioEditar.correo" />
                     </div>
+                    <div class="mb-3">
+                        <label for="usuario">Usuario</label>
+                        <InputText class="form-control" id="user" @bind-Value="usuarioEditar.user" />
+                    </div>
 
-                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="submit" class="btn btn-success">Editar</button>
                     <button type="button" class="btn btn-secondary ms-2" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn btn-danger ms-2" @onclick="@(() => EliminarUsuario(usuarioEditar.id))">Eliminar</button>
+
+
                 </EditForm>
             </div>
         </div>
@@ -154,14 +171,58 @@ else
 
 @code {
     private List<GetUsers>? usuarios;
+    private List<GetUsers>? usuariosFiltrados;
     private string error = string.Empty;
     private bool cargando = true;
     private GetUsers usuarioEditar = new GetUsers();
-    private bool mostrarModal = false; // Variable para controlar la visibilidad del modal
+    private bool mostrarModal = false;
+    private string _filtroBusqueda = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    // Propiedad que se encarga de la lógica de filtrado cuando cambia el valor
+    private string filtroBusqueda
     {
-        await CargarUsuarios();
+        get => _filtroBusqueda;
+        set
+        {
+            _filtroBusqueda = value;
+            FiltrarUsuarios();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CargarUsuarios();
+        }
+    }
+
+    private void FiltrarUsuarios()
+    {
+        if (usuarios == null)
+        {
+            usuariosFiltrados = new List<GetUsers>();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_filtroBusqueda))
+        {
+            usuariosFiltrados = usuarios;
+        }
+        else
+        {
+            if (int.TryParse(_filtroBusqueda, out int idBusqueda))
+            {
+                usuariosFiltrados = usuarios.Where(u => u.id == idBusqueda).ToList();
+            }
+            else
+            {
+                usuariosFiltrados = usuarios.Where(u =>
+                    (u.nombre != null && u.nombre.Contains(_filtroBusqueda, StringComparison.OrdinalIgnoreCase)) ||
+                    (u.apellido != null && u.apellido.Contains(_filtroBusqueda, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+            }
+        }
     }
 
     private async Task CargarUsuarios()
@@ -171,6 +232,7 @@ else
         try
         {
             usuarios = await autheService.GetUsuariosAsync();
+            FiltrarUsuarios(); // Llama a la función de filtro inicial
         }
         catch (Exception ex)
         {
@@ -186,10 +248,9 @@ else
 
     private void EditarUsuario(GetUsers usuario)
     {
-        // Crea una copia del objeto para evitar modificar la lista original directamente
         usuarioEditar = new GetUsers
         {
-            Id = usuario.Id,
+            id = usuario.id,
             nombre = usuario.nombre,
             apellido = usuario.apellido,
             telefono = usuario.telefono,
@@ -201,7 +262,7 @@ else
             rolId = usuario.rolId
         };
         mostrarModal = true;
-        error = string.Empty; // Limpia cualquier error anterior
+        error = string.Empty;
     }
 
     private void CerrarModal()
@@ -209,6 +270,7 @@ else
         usuarioEditar = new GetUsers();
         mostrarModal = false;
         error = string.Empty;
+        StateHasChanged();
     }
 
     private async Task GuardarCambios()
@@ -224,5 +286,11 @@ else
         {
             error = resultado;
         }
+    }
+    // Método para redirigir a la página de eliminación
+    private void EliminarUsuario(int id)
+    {
+        CerrarModal(); // Cierra el modal antes de la redirección
+        NavigationManager.NavigateTo($"/EliminarUsu/{id}");
     }
 }

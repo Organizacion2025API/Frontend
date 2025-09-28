@@ -175,7 +175,7 @@ namespace ApexMagnamentFrontend.Services
                 }
 
                 // Enviar la solicitud PUT a la API
-                var response = await _httpClient.PutAsJsonAsync($"api/personal/{usuario.Id}", usuario);
+                var response = await _httpClient.PutAsJsonAsync($"api/personal/{usuario.id}", usuario);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
@@ -187,6 +187,37 @@ namespace ApexMagnamentFrontend.Services
             }
             catch (Exception ex)
             {
+                return $"Error de conexión: {ex.Message}";
+            }
+        }
+
+        public async Task<string> DeleteUsuarioAsync(GetUsers usuario)
+        {
+            try
+            {
+                // Asegura que tienes el token antes de hacer la solicitud.
+                if (!await ConfigurarTokenAsync())
+                {
+                    return "Error: No hay sesión activa. Por favor, inicie sesión.";
+                }
+
+                // Realiza la solicitud DELETE a la API, usando el Id del usuario.
+                var response = await _httpClient.DeleteAsync($"api/personal/{usuario.id}");
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // La eliminación fue exitosa.
+                    return null;
+                }
+
+                // Retorna el mensaje de error si la solicitud no fue exitosa.
+                return $"Error {(int)response.StatusCode}: {responseContent}";
+            }
+            catch (Exception ex)
+            {
+                // Captura cualquier excepción de red o de otro tipo.
                 return $"Error de conexión: {ex.Message}";
             }
         }
