@@ -8,17 +8,17 @@
 
 <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="col-md-6 text-center">
-        <h3>Eliminar Usuario</h3>
+        <h3>Eliminar Personal</h3>
 
         @if (usuario == null)
         {
-            <p><em>Cargando detalles del usuario...</em></p>
+            <p><em>Cargando detalles del personal...</em></p>
         }
         else
         {
             <div class="card p-4 custom-shadow">
                 <div class="alert alert-warning" role="alert">
-                    <p>¿Estás seguro de que quieres eliminar al usuario **@usuario.nombre @usuario.apellido**?</p>
+                    <p>¿Estás seguro de que quieres eliminar al personal **@usuario.nombre @usuario.apellido**?</p>
                     <p>Esta acción es irreversible.</p>
                 </div>
 
@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="d-flex justify-content-center mt-3">
-                    <button class="btn btn-danger" @onclick="ConfirmarEliminacion">Confirmar Eliminación</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminacion">Confirmar</button>
                     <button class="btn btn-secondary ms-2" @onclick="CancelarEliminacion">Cancelar</button>
                 </div>
 
