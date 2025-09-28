@@ -15,9 +15,9 @@
         margin-top: 20px;
     }
 
-        .custom-shadow:hover {
-            transform: translateY(-3px);
-        }
+    .custom-shadow:hover {
+        transform: translateY(-3px);
+    }
 
     .table th,
     .table td {
@@ -32,6 +32,29 @@
         margin-bottom: 20px;
         font-weight: bold;
     }
+
+    /* Estilos para el modal */
+    .modal-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050; /* Z-index de un modal de Bootstrap */
+    }
+
+    .modal-content-custom {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 600px;
+    }
 </style>
 
 <h3>Lista de Usuarios</h3>
@@ -43,7 +66,6 @@
     </div>
 }
 
-@* Tabla de usuarios *@
 @if (cargando)
 {
     <p><em>Cargando usuarios...</em></p>
@@ -79,8 +101,8 @@ else
                     <td>@usuario.correo</td>
                     <td>@usuario.user</td>
                     <td>@usuario.status</td>
-                    <td>@usuario.fechaIngreso</td>
-                    <td>@usuario.fechaSession</td>
+                    <td>@usuario.fechaIngreso?.ToShortDateString()</td>
+                    <td>@usuario.fechaSession?.ToShortDateString()</td>
                     <td>@usuario.rolId</td>
                     <td>
                         <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUsuario(usuario))">Editar</button>
@@ -91,47 +113,51 @@ else
     </table>
 }
 
-@* Formulario de Edición *@
-@if (mostrarFormulario)
+@* Formulario de Edición en una ventana flotante (Modal) *@
+@if (mostrarModal)
 {
-    <div class="custom-shadow mt-4">
-        <h4>Editar usuario</h4>
+    <div class="modal-background">
+        <div class="modal-content-custom">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Usuario</h5>
+                <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@usuarioEditar" OnValidSubmit="GuardarCambios">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
-        <EditForm Model="@usuarioEditar" OnValidSubmit="GuardarCambios">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+                    <div class="mb-3">
+                        <label for="nombre">Nombre</label>
+                        <InputText class="form-control" id="nombre" @bind-Value="usuarioEditar.nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="apellido">Apellido</label>
+                        <InputText class="form-control" id="apellido" @bind-Value="usuarioEditar.apellido" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono">Teléfono</label>
+                        <InputText class="form-control" id="telefono" @bind-Value="usuarioEditar.telefono" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="correo">Correo</label>
+                        <InputText class="form-control" id="correo" @bind-Value="usuarioEditar.correo" />
+                    </div>
 
-            <div class="mb-3">
-                <label for="nombre">Nombre</label>
-                <InputText class="form-control" id="nombre" @bind-Value="usuarioEditar.nombre" />
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary ms-2" @onclick="CerrarModal">Cancelar</button>
+                </EditForm>
             </div>
-            <div class="mb-3">
-                <label for="apellido">Apellido</label>
-                <InputText class="form-control" id="apellido" @bind-Value="usuarioEditar.apellido" />
-            </div>
-            <div class="mb-3">
-                <label for="telefono">Teléfono</label>
-                <InputText class="form-control" id="telefono" @bind-Value="usuarioEditar.telefono" />
-            </div>
-            <div class="mb-3">
-                <label for="correo">Correo</label>
-                <InputText class="form-control" id="correo" @bind-Value="usuarioEditar.correo" />
-            </div>
-
-            <button type="submit" class="btn btn-success">Guardar</button>
-            <button type="button" class="btn btn-secondary ms-2" @onclick="CancelarEdicion">Cancelar</button>
-        </EditForm>
+        </div>
     </div>
 }
 
-
 @code {
-
     private List<GetUsers>? usuarios;
     private string error = string.Empty;
     private bool cargando = true;
     private GetUsers usuarioEditar = new GetUsers();
-    private bool mostrarFormulario = false;
+    private bool mostrarModal = false; // Variable para controlar la visibilidad del modal
 
     protected override async Task OnInitializedAsync()
     {
@@ -163,7 +189,7 @@ else
         // Crea una copia del objeto para evitar modificar la lista original directamente
         usuarioEditar = new GetUsers
         {
-            Id = usuario.Id, // <-- Asegúrate de que esta línea esté correcta
+            Id = usuario.Id,
             nombre = usuario.nombre,
             apellido = usuario.apellido,
             telefono = usuario.telefono,
@@ -174,14 +200,14 @@ else
             fechaSession = usuario.fechaSession,
             rolId = usuario.rolId
         };
-        mostrarFormulario = true;
+        mostrarModal = true;
         error = string.Empty; // Limpia cualquier error anterior
     }
 
-    private void CancelarEdicion()
+    private void CerrarModal()
     {
         usuarioEditar = new GetUsers();
-        mostrarFormulario = false;
+        mostrarModal = false;
         error = string.Empty;
     }
 
@@ -192,7 +218,7 @@ else
         if (string.IsNullOrEmpty(resultado))
         {
             await CargarUsuarios();
-            CancelarEdicion();
+            CerrarModal();
         }
         else
         {
