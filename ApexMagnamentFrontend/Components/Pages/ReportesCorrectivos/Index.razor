@@ -16,6 +16,11 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1>Reportes Correctivos</h1>
+
+                @* BOTÓN: Dirige a la página de creación *@
+                <button class="btn btn-success" @onclick="NavegarACrearReporte">
+                    <i class="bi bi-plus-circle"></i> Crear Reporte
+                </button>
             </div>
 
             @if (!estaAutenticado)
@@ -33,10 +38,10 @@
                         <div class="col-md-6 mb-3 mb-md-0">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                                <input type="number" 
-                                       class="form-control" 
+                                <input type="number"
+                                       class="form-control"
                                        placeholder="Buscar por ID del reporte..."
-                                       @bind="filtroBusquedaId" 
+                                       @bind="filtroBusquedaId"
                                        @bind:event="oninput" />
                             </div>
                         </div>
@@ -45,10 +50,10 @@
                         <div class="col-md-6">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-tools"></i></span>
-                                <input type="number" 
-                                       class="form-control" 
+                                <input type="number"
+                                       class="form-control"
                                        placeholder="Buscar por Tipo Mantenimiento (ej: 1 o 2)..."
-                                       @bind="filtroBusquedaTipoMantenimiento" 
+                                       @bind="filtroBusquedaTipoMantenimiento"
                                        @bind:event="oninput" />
                             </div>
                         </div>
@@ -63,15 +68,21 @@
                 <div class="card-body">
                     @if (cargando)
                     {
-                        @* ... (Spinner de carga) ... *@
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando reportes...</p>
+                        </div>
                     }
                     else
                     {
                         @if (reportes == null)
                         {
-                            @* ... (Alerta de error) ... *@
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> No se pudieron cargar los reportes.
+                            </div>
                         }
-                        @* Ahora revisamos si la lista filtrada tiene elementos *@
                         else if (!ReportesFiltrados.Any())
                         {
                             <div class="text-center text-muted">
@@ -133,14 +144,10 @@
     private List<ReporteCorrectivoDTO.ReporteCorrectivo>? reportes;
     private bool cargando = true;
     private bool estaAutenticado = false;
-    
-    // 1. Variable para el filtro de ID (renombrada para claridad)
-    private string filtroBusquedaId = string.Empty;
 
-    // 2. NUEVA Variable para el filtro de Tipo de Mantenimiento
+    private string filtroBusquedaId = string.Empty;
     private string filtroBusquedaTipoMantenimiento = string.Empty;
 
-    // 3. Propiedad calculada que aplica AMBOS filtros
     private IEnumerable<ReporteCorrectivoDTO.ReporteCorrectivo> ReportesFiltrados
     {
         get
@@ -209,5 +216,11 @@
     private void VerDetalle(ReporteCorrectivoDTO.ReporteCorrectivo reporte)
     {
         Console.WriteLine($"Ver detalle del Reporte ID: {reporte.Id}");
+    }
+
+    // NUEVO MÉTODO para navegar a la página de creación
+    private void NavegarACrearReporte()
+    {
+        Navigation.NavigateTo("/reportes-correctivos/crear");
     }
 }
