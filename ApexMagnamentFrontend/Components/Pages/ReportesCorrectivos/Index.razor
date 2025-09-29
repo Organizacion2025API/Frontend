@@ -1,0 +1,213 @@
+﻿@page "/reportes-correctivos"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@inject ReporteCorrectivoService ReporteService
+@inject AutheService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@layout MainLayout
+
+<PageTitle>Lista de Reportes Correctivos</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Reportes Correctivos</h1>
+            </div>
+
+            @if (!estaAutenticado)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Debe iniciar sesión para ver los reportes correctivos.
+                </div>
+            }
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        @* 💡 FILTRO POR ID (Lado Izquierdo) *@
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       placeholder="Buscar por ID del reporte..."
+                                       @bind="filtroBusquedaId" 
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+
+                        @* 💡 NUEVO FILTRO POR TIPO DE MANTENIMIENTO (Lado Derecho) *@
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-tools"></i></span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       placeholder="Buscar por Tipo Mantenimiento (ej: 1 o 2)..."
+                                       @bind="filtroBusquedaTipoMantenimiento" 
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lista de Reportes</h5>
+                </div>
+                <div class="card-body">
+                    @if (cargando)
+                    {
+                        @* ... (Spinner de carga) ... *@
+                    }
+                    else
+                    {
+                        @if (reportes == null)
+                        {
+                            @* ... (Alerta de error) ... *@
+                        }
+                        @* Ahora revisamos si la lista filtrada tiene elementos *@
+                        else if (!ReportesFiltrados.Any())
+                        {
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                                <p class="mt-2">No se encontraron reportes que coincidan con los filtros.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Solicitud ID</th>
+                                            <th>Observación</th>
+                                            <th>Tipo Mantenimiento</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                            <th>Personal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @* Recorremos ReportesFiltrados *@
+                                        @foreach (var reporte in ReportesFiltrados)
+                                        {
+                                            <tr>
+                                                <td>@reporte.Id</td>
+                                                <td>@reporte.SolicitudId</td>
+                                                <td>@reporte.Observacion</td>
+                                                <td>@reporte.TipoMantenimiento</td>
+                                                <td>
+                                                    <span class="badge @(reporte.Estado == 3 ? "bg-success" : reporte.Estado == 2 ? "bg-warning text-dark" : "bg-primary")">
+                                                        @GetEstadoTexto(reporte.Estado)
+                                                    </span>
+                                                </td>
+                                                <td>@reporte.FechaCreacion?.ToString("yyyy-MM-dd")</td>
+                                                <td>@reporte.NombrePersonal</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(reporte)">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ReporteCorrectivoDTO.ReporteCorrectivo>? reportes;
+    private bool cargando = true;
+    private bool estaAutenticado = false;
+    
+    // 1. Variable para el filtro de ID (renombrada para claridad)
+    private string filtroBusquedaId = string.Empty;
+
+    // 2. NUEVA Variable para el filtro de Tipo de Mantenimiento
+    private string filtroBusquedaTipoMantenimiento = string.Empty;
+
+    // 3. Propiedad calculada que aplica AMBOS filtros
+    private IEnumerable<ReporteCorrectivoDTO.ReporteCorrectivo> ReportesFiltrados
+    {
+        get
+        {
+            var consulta = reportes ?? Enumerable.Empty<ReporteCorrectivoDTO.ReporteCorrectivo>();
+
+            // Filtro por ID
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaId))
+            {
+                consulta = consulta.Where(r => r.Id.ToString().Contains(filtroBusquedaId));
+            }
+
+            // Filtro por Tipo de Mantenimiento
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaTipoMantenimiento))
+            {
+                consulta = consulta.Where(r => r.TipoMantenimiento.ToString().Contains(filtroBusquedaTipoMantenimiento));
+            }
+
+            return consulta;
+        }
+    }
+
+
+    private string GetEstadoTexto(int estado)
+    {
+        return estado switch
+        {
+            1 => "Pendiente",
+            2 => "Iniciado",
+            3 => "Finalizado",
+            _ => "Desconocido"
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VerificarAutenticacion();
+        await CargarReportes();
+    }
+
+    private async Task VerificarAutenticacion()
+    {
+        estaAutenticado = await AuthService.IsAuthenticated();
+        StateHasChanged();
+    }
+
+    private async Task CargarReportes()
+    {
+        cargando = true;
+        try
+        {
+            reportes = await ReporteService.ObtenerTodosLosReportesCorrectivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar reportes: {ex.Message}");
+            reportes = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void VerDetalle(ReporteCorrectivoDTO.ReporteCorrectivo reporte)
+    {
+        Console.WriteLine($"Ver detalle del Reporte ID: {reporte.Id}");
+    }
+}
