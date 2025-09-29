@@ -18,7 +18,7 @@
         {
             <div class="card p-4 custom-shadow">
                 <div class="alert alert-warning" role="alert">
-                    <p>¿Estás seguro de que quieres eliminar la asignacion **@asignacion.equipoId @asignacion.equipoNombre**?</p>
+                    <p>¿Estás seguro de que quieres eliminar la asignacion **@asignacion.EquipoId @asignacion.equipoNombre**?</p>
                     <p>Esta acción es irreversible.</p>
                 </div>
 
@@ -27,7 +27,7 @@
                         <tbody>
                             <tr>
                                 <td><strong>Personal asignado:</strong></td>
-                                <td>@asignacion.personalId</td>
+                                <td>@asignacion.PersonalId</td>
                             </tr>
                             <tr>
                                 <td><strong>N serie del equipo:</strong></td>
@@ -74,7 +74,7 @@
             try
             {
                 var usuarios = await asignacionService.GetAllAsync();
-                asignacion = usuarios?.FirstOrDefault(u => u.id == Id);
+                asignacion = usuarios?.FirstOrDefault(u => u.Id == Id);
 
                 if (asignacion == null)
                 {
@@ -109,7 +109,7 @@
 
         if (string.IsNullOrEmpty(resultado))
         {
-            mensajeError = $"asignacion a esquipo {asignacion.equipoId} eliminado exitosamente.";
+            mensajeError = $"asignacion a esquipo {asignacion.EquipoId} eliminado exitosamente.";
             await Task.Delay(2000);
             NavigationManager.NavigateTo("/asignacionEquipo");
         }

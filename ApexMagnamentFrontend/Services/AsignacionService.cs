@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using static ApexMagnamentFrontend.DTOs.AsignacionDTO;
+using static ApexMagnamentFrontend.DTOs.ReporteCorrectivoDTO;
 namespace ApexMagnamentFrontend.Services
 {
     public class AsignacionService
@@ -73,24 +75,87 @@ namespace ApexMagnamentFrontend.Services
         }
 
         // 🔹 Crear asignacion
-        public async Task<bool> CreateAsync(AsignacionDTO nuevo)
+
+
+        //var response = await _http.PostAsJsonAsync(_baseUrl, nuevo);
+        /* public async Task<bool> CreateAsync(CrearAsignacionEquipoDTO nuevaAsignacion)
+         {
+             try
+             {
+                 if (!await ConfigurarTokenAsync())
+                     return false;
+
+                 // 🔧 CREAR FORMDATA EN LUGAR DE JSON
+                 var formData = new MultipartFormDataContent();
+
+                 // Agregar todos los campos como FormData
+                 formData.Add(new StringContent(nuevaAsignacion.EquipoId.ToString()), "equipoId");
+                 formData.Add(new StringContent(nuevaAsignacion.PersonalId.ToString()), "personalId");
+                 Console.WriteLine($"📤 Enviando FormData a: {_baseUrl}");
+
+                 // 🔧 USAR PostAsync CON FORMDATA
+                 var response = await _http.PostAsync(_baseUrl, formData);
+
+                 if (!response.IsSuccessStatusCode)
+                 {
+                     var error = await response.Content.ReadAsStringAsync();
+                     Console.WriteLine($"❌ Error: {response.StatusCode} - {error}");
+                     return false;
+                 }
+
+                 Console.WriteLine("✅ Equipo creado correctamente.");
+                 return true;
+             }
+             catch (Exception ex)
+             {
+                 Console.WriteLine($"❌ Excepción: {ex.Message}");
+                 return false;
+             }
+         }*/
+
+        public async Task<(bool Exito, string Mensaje)> CrearReporteCorrectivoAsync(CrearAsignacionEquipoDTO asignacionCreacion)
         {
-            if (!await ConfigurarTokenAsync()) return false;
-
-            var response = await _http.PostAsJsonAsync(_baseUrl, nuevo);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error al crear asignacion: {response.StatusCode} - {error}");
+                if (!await ConfigurarTokenAsync())
+                    return (false, "Error de autenticación. Inicie sesión nuevamente.");
+
+                Console.WriteLine($"📤 Enviando reporte para solicitud: {asignacionCreacion.EquipoId}");
+                Console.WriteLine($"🔧 Tipo mantenimiento: {asignacionCreacion.PersonalId}");
+
+                // ✅ PostAsJsonAsync es correcto para esta API
+                var response = await _http.PostAsJsonAsync(_baseUrl, asignacionCreacion);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"✅ asignacion creada exitosamente. Código: {response.StatusCode}");
+                    return (true, "asignacion creado exitosamente.");
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al crear asignacion. Código: {response.StatusCode}");
+                    Console.WriteLine($"📋 Detalle del error: {errorContent}");
+
+                    // Manejo específico de errores comunes
+                    return response.StatusCode switch
+                    {
+                        System.Net.HttpStatusCode.BadRequest => (false, $"Datos inválidos: {errorContent}"),
+                        System.Net.HttpStatusCode.NotFound => (false, "asignacion no encontrada"),
+                        System.Net.HttpStatusCode.Conflict => (false, "Ya existe una asignacion para esta solicitud"),
+                        System.Net.HttpStatusCode.Forbidden => (false, "Sin permisos para crear asignacion"),
+                        _ => (false, $"Error {response.StatusCode}: {errorContent}")
+                    };
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("✅ asignacion creada correctamente.");
+                Console.WriteLine($"❌ Excepción al crear asigmacion: {ex.Message}");
+                return (false, $"Error de conexión: {ex.Message}");
             }
 
-            return response.IsSuccessStatusCode;
         }
+
 
         // 🔹 Eliminar asignacion
         public async Task<string> DeleteAsignacionAsync(AsignacionDTO asignacion)
@@ -104,7 +169,7 @@ namespace ApexMagnamentFrontend.Services
                 }
 
                 // Realiza la solicitud DELETE a la API, usando el Id del usuario.
-                var response = await _http.DeleteAsync($"{_baseUrl}/{asignacion.id}");
+                var response = await _http.DeleteAsync($"{_baseUrl}/{asignacion.Id}");
 
                 var responseContent = await response.Content.ReadAsStringAsync();
 

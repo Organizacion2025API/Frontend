@@ -19,7 +19,10 @@ else if (!asignaciones.Any())
 }
 else
 {
+    <div>
+        <button class="btn btn-outline-dark mb-3" @onclick="IrACrear">➕ Nuevo Equipo</button>
     <table class="table table-striped">
+
         <thead>
             <tr>
                 <th>PersonalId</th>
@@ -35,14 +38,14 @@ else
             @foreach (var eq in asignaciones)
             {
                 <tr>
-                    <td>@eq.personalId</td>
-                    <td>@eq.equipoId</td>
+                    <td>@eq.PersonalId</td>
+                    <td>@eq.EquipoId</td>
                     <td>@eq.equipoNombre</td>
                     <td>@eq.equipoDescripcion</td>
                     <td>@eq.equipoModelo</td>
                     <td>@eq.equipoNserie</td>
                     <td>
-                        <button class="btn btn-outline-dark mb-3" @onclick="() => IrAEliminar(eq.id)">🗑️ Eliminar</button>
+                        <button class="btn btn-outline-dark mb-3" @onclick="() => IrAEliminar(eq.Id)">🗑️ Eliminar</button>
                     </td>
 
                     
@@ -50,6 +53,7 @@ else
             }
         </tbody>
     </table>
+    </div>
 }
 
 @code {
@@ -87,4 +91,6 @@ else
         }
     }
     void IrAEliminar(int id) => NavigationManager.NavigateTo($"/asignaciones/delete/{id}");
+    void IrACrear() => NavigationManager.NavigateTo("/asignacionEquipo/crear");
+
 }

@@ -1,0 +1,118 @@
+﻿@page "/asignacionEquipo/crear"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@using static ApexMagnamentFrontend.DTOs.AsignacionDTO
+@inject AsignacionService asignacionService
+@inject NavigationManager Navigation
+
+@layout MainLayout
+
+<PageTitle>Crear Nuevo Reporte Correctivo</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Crear Nuevo Reporte Correctivo</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Datos del Reporte</h5>
+                </div>
+                <div class="card-body">
+
+                    @*  Muestra el mensaje de estado (éxito/error) *@
+                    @if (!string.IsNullOrEmpty(mensajeEstado))
+                    {
+                        <div class="alert @(esExito ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+                            @mensajeEstado
+                            <button type="button" class="btn-close" @onclick="() => mensajeEstado = string.Empty"></button>
+                        </div>
+                    }
+
+                    @*  Formulario Blazor para validación y envío *@
+                    <EditForm Model="@asignacionCreacion" OnValidSubmit="@ManejarCreacionAsignacion">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="equipoId" class="form-label">ID de equipo</label>
+                            <InputNumber id="equipoId" @bind-Value="asignacionCreacion.EquipoId" class="form-control" placeholder="Ingrese el ID del equipo" required />
+                            <ValidationMessage For="@(() => asignacionCreacion.EquipoId)" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="personalId" class="form-label">ID de equipo</label>
+                            <InputNumber id="personalId" @bind-Value="asignacionCreacion.PersonalId" class="form-control" placeholder="Ingrese el ID del personal" required />
+                            <ValidationMessage For="@(() => asignacionCreacion.PersonalId)" />
+                        </div>
+
+
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" @onclick="Volver">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" disabled="@cargando">
+                                @if (cargando)
+                                {
+                                    <span>
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Creando...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        <i class="bi bi-send"></i>
+                                        Crear asignacion
+                                    </span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Usamos el DTO específico para la creación
+    private CrearAsignacionEquipoDTO asignacionCreacion = new();
+    private bool cargando = false;
+    private bool esExito = false;
+    private string mensajeEstado = string.Empty;
+
+    // Asegúrate de tener estas referencias en el DTO para que DataAnnotationsValidator funcione
+    // using System.ComponentModel.DataAnnotations;
+    private async Task ManejarCreacionAsignacion()
+    {
+        cargando = true;
+        mensajeEstado = string.Empty;
+        StateHasChanged();
+
+        var (exito, mensaje) = await asignacionService.CrearReporteCorrectivoAsync(asignacionCreacion);
+
+        cargando = false;
+        esExito = exito;
+        mensajeEstado = mensaje;
+
+        if (exito)
+        {
+            // Opcional: Reiniciar el formulario o redirigir
+            // Redirigir a la lista de reportes después de 2 segundos.
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/asignacionEquipo");
+        }
+        else
+        {
+            // Mantiene el formulario para corregir errores si la API devuelve detalles
+            StateHasChanged();
+        }
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/asignacionEquipo");
+    }
+}
