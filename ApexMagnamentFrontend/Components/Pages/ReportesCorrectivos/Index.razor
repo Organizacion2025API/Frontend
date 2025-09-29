@@ -29,13 +29,26 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-12">
+                        @* 💡 FILTRO POR ID (Lado Izquierdo) *@
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
                                 <input type="number" 
                                        class="form-control" 
                                        placeholder="Buscar por ID del reporte..."
-                                       @bind="filtroBusqueda" 
+                                       @bind="filtroBusquedaId" 
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+
+                        @* 💡 NUEVO FILTRO POR TIPO DE MANTENIMIENTO (Lado Derecho) *@
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-tools"></i></span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       placeholder="Buscar por Tipo Mantenimiento (ej: 1 o 2)..."
+                                       @bind="filtroBusquedaTipoMantenimiento" 
                                        @bind:event="oninput" />
                             </div>
                         </div>
@@ -50,27 +63,20 @@
                 <div class="card-body">
                     @if (cargando)
                     {
-                        <div class="text-center">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-2">Cargando reportes...</p>
-                        </div>
+                        @* ... (Spinner de carga) ... *@
                     }
                     else
                     {
                         @if (reportes == null)
                         {
-                            <div class="alert alert-danger">
-                                <strong>Error:</strong> No se pudieron cargar los reportes.
-                            </div>
+                            @* ... (Alerta de error) ... *@
                         }
-                        @* Usamos ReportesFiltrados.Count() *@
+                        @* Ahora revisamos si la lista filtrada tiene elementos *@
                         else if (!ReportesFiltrados.Any())
                         {
                             <div class="text-center text-muted">
                                 <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
-                                <p class="mt-2">@((!string.IsNullOrEmpty(filtroBusqueda) && reportes.Any()) ? $"No se encontraron reportes con ID: {filtroBusqueda}" : "No hay reportes correctivos registrados")</p>
+                                <p class="mt-2">No se encontraron reportes que coincidan con los filtros.</p>
                             </div>
                         }
                         else
@@ -90,7 +96,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @*  Recorremos ReportesFiltrados *@
+                                        @* Recorremos ReportesFiltrados *@
                                         @foreach (var reporte in ReportesFiltrados)
                                         {
                                             <tr>
@@ -128,14 +134,34 @@
     private bool cargando = true;
     private bool estaAutenticado = false;
     
-    // Variable para el filtro (string, para manejar el valor del input type="number")
-    private string filtroBusqueda = string.Empty;
+    // 1. Variable para el filtro de ID (renombrada para claridad)
+    private string filtroBusquedaId = string.Empty;
 
-    // Propiedad calculada para aplicar el filtro
-    private IEnumerable<ReporteCorrectivoDTO.ReporteCorrectivo> ReportesFiltrados => 
-        string.IsNullOrWhiteSpace(filtroBusqueda)
-        ? reportes ?? Enumerable.Empty<ReporteCorrectivoDTO.ReporteCorrectivo>()
-        : reportes.Where(r => r.Id.ToString().Contains(filtroBusqueda));
+    // 2. NUEVA Variable para el filtro de Tipo de Mantenimiento
+    private string filtroBusquedaTipoMantenimiento = string.Empty;
+
+    // 3. Propiedad calculada que aplica AMBOS filtros
+    private IEnumerable<ReporteCorrectivoDTO.ReporteCorrectivo> ReportesFiltrados
+    {
+        get
+        {
+            var consulta = reportes ?? Enumerable.Empty<ReporteCorrectivoDTO.ReporteCorrectivo>();
+
+            // Filtro por ID
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaId))
+            {
+                consulta = consulta.Where(r => r.Id.ToString().Contains(filtroBusquedaId));
+            }
+
+            // Filtro por Tipo de Mantenimiento
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaTipoMantenimiento))
+            {
+                consulta = consulta.Where(r => r.TipoMantenimiento.ToString().Contains(filtroBusquedaTipoMantenimiento));
+            }
+
+            return consulta;
+        }
+    }
 
 
     private string GetEstadoTexto(int estado)
@@ -164,8 +190,6 @@
     private async Task CargarReportes()
     {
         cargando = true;
-        StateHasChanged();
-
         try
         {
             reportes = await ReporteService.ObtenerTodosLosReportesCorrectivosAsync();

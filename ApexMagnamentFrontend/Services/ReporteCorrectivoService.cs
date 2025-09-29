@@ -58,7 +58,7 @@ namespace ApexMagnamentFrontend.Services
                 var json = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"✅ JSON recibido para reportes: {json}");
 
-                // ✅ CORRECCIÓN CLAVE: Deserializa DIRECTAMENTE a una lista, 
+                //  Deserializa DIRECTAMENTE a una lista, 
                 // ya que el JSON de la API es un array raíz.
                 var reportesList = JsonSerializer.Deserialize<List<ReporteCorrectivo>>(json, new JsonSerializerOptions
                 {
