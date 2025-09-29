@@ -6,7 +6,7 @@
 @inject UbicacionService UbicacionService
 @inject NavigationManager NavigationManager
 
-<h3>✏️ Editar Equipo</h3>
+<h3 class="text-center mb-4">✏️ Editar Equipo</h3>
 
 @if (equipo == null)
 {
@@ -14,65 +14,73 @@
 }
 else
 {
-    <EditForm Model="equipo" OnValidSubmit="Guardar">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg p-4 mb-5 bg-white rounded" style="width: 500px;">
+            <div class="card-body">
+                <EditForm Model="equipo" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
-        <div class="mb-3">
-            <label>Nombre</label>
-            <InputText class="form-control" @bind-Value="equipo.Nombre" />
+                    <div class="mb-3">
+                        <label>Nombre</label>
+                        <InputText class="form-control" @bind-Value="equipo.Nombre" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Modelo</label>
+                        <InputText class="form-control" @bind-Value="equipo.Modelo" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>N° Serie</label>
+                        <InputText class="form-control" @bind-Value="equipo.NSerie" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Descripción</label>
+                        <InputText class="form-control" @bind-Value="equipo.Descripcion" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Garantía (meses)</label>
+                        <InputNumber class="form-control" @bind-Value="equipo.Garantia" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Imagen (URL)</label>
+                        <InputText class="form-control" @bind-Value="equipo.Img" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Categoría</label>
+                        <InputSelect class="form-select" @bind-Value="equipo.CategoriaId">
+                            <option value="">-- Seleccionar --</option>
+                            @foreach (var cat in categorias)
+                            {
+                                <option value="@cat.Id">@cat.NombreCategoria</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Ubicación</label>
+                        <InputSelect class="form-select" @bind-Value="equipo.UbicacionId">
+                            <option value="">-- Seleccionar --</option>
+                            @foreach (var ubi in ubicaciones)
+                            {
+                                <option value="@ubi.Id">@ubi.NombreUbicacion</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-outline-success">💾 Guardar</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">❌ Cancelar</button>
+                    </div>
+                </EditForm>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label>Modelo</label>
-            <InputText class="form-control" @bind-Value="equipo.Modelo" />
-        </div>
-
-        <div class="mb-3">
-            <label>N° Serie</label>
-            <InputText class="form-control" @bind-Value="equipo.NSerie" />
-        </div>
-
-        <div class="mb-3">
-            <label>Descripción</label>
-            <InputText class="form-control" @bind-Value="equipo.Descripcion" />
-        </div>
-
-        <div class="mb-3">
-            <label>Garantía (meses)</label>
-            <InputNumber class="form-control" @bind-Value="equipo.Garantia" />
-        </div>
-
-        <div class="mb-3">
-            <label>Imagen (URL)</label>
-            <InputText class="form-control" @bind-Value="equipo.Img" />
-        </div>
-
-        <div class="mb-3">
-            <label>Categoría</label>
-            <InputSelect class="form-select" @bind-Value="equipo.CategoriaId">
-                <option value="">-- Seleccionar --</option>
-                @foreach (var cat in categorias)
-                {
-                    <option value="@cat.Id">@cat.NombreCategoria</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="mb-3">
-            <label>Ubicación</label>
-            <InputSelect class="form-select" @bind-Value="equipo.UbicacionId">
-                <option value="">-- Seleccionar --</option>
-                @foreach (var ubi in ubicaciones)
-                {
-                    <option value="@ubi.Id">@ubi.NombreUbicacion</option>
-                }
-            </InputSelect>
-        </div>
-
-        <button type="submit" class="btn btn-success">💾 Guardar</button>
-        <button type="button" class="btn btn-secondary" @onclick="Cancelar">❌ Cancelar</button>
-    </EditForm>
+    </div>
 }
 
 @code {

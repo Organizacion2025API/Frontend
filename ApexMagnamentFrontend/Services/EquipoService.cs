@@ -1,34 +1,34 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ApexMagnamentFrontend.DTOs;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace ApexMagnamentFrontend.Services
 {
     public class EquipoService
     {
         private readonly HttpClient _http;
+        private readonly ProtectedSessionStorage _localStore;
         private readonly string _baseUrl = "https://gateway-api-dfbk.onrender.com/ApiAdministracion/api/equipos";
-        private string? _token;
 
-        public EquipoService(HttpClient http)
+        public EquipoService(HttpClient http, ProtectedSessionStorage localStore)
         {
             _http = http;
+            _localStore = localStore;
         }
 
-        public void SetToken(string token) => _token = token;
-
-        private Task<bool> ConfigurarTokenAsync()
+        private async Task<bool> ConfigurarTokenAsync()
         {
-            if (string.IsNullOrEmpty(_token))
+            var result = await _localStore.GetAsync<string>("token");
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
             {
-                Console.WriteLine("⚠️ Token no encontrado. La API requiere autenticación.");
-                return Task.FromResult(false);
+                _http.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", result.Value);
+                return true;
             }
-
-            _http.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _token);
-
-            return Task.FromResult(true);
+            Console.WriteLine("⚠️ Token no encontrado. La API requiere autenticación.");
+            return false;
         }
 
         // 🔹 Obtener todos los equipos
@@ -36,16 +36,24 @@ namespace ApexMagnamentFrontend.Services
         {
             try
             {
-                if (!await ConfigurarTokenAsync()) return new List<EquipoDTO>();
+                Console.WriteLine("📡 Intentando conectar con la API para obtener ubicaciones...");
+
+                if (!await ConfigurarTokenAsync())
+                    return new List<EquipoDTO>();
 
                 var response = await _http.GetAsync(_baseUrl);
+                Console.WriteLine($"📡 Código de respuesta: {response.StatusCode}");
+
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"❌ Error al obtener equipos: {response.StatusCode}");
+                    Console.WriteLine("❌ Error al obtener equipos. La API respondió con un estado no exitoso.");
                     return new List<EquipoDTO>();
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"✅ JSON recibido: {json}");
+
+                // Deserializar usando PaginatedResponse
                 var paged = JsonSerializer.Deserialize<PaginatedResponse<EquipoDTO>>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -55,10 +63,11 @@ namespace ApexMagnamentFrontend.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error inesperado: {ex.Message}");
+                Console.WriteLine($"❌ Error inesperado al obtener equipos: {ex.Message}");
                 return new List<EquipoDTO>();
             }
         }
+
 
         // 🔹 Obtener un equipo por ID
         public async Task<EquipoDTO?> GetByIdAsync(int id)
@@ -72,63 +81,134 @@ namespace ApexMagnamentFrontend.Services
         }
 
         // 🔹 Crear equipo
-        public async Task<bool> CreateAsync(CrearEquipoDTO nuevo)
+        public async Task<bool> CreateAsync(CrearEquipoDTO nuevoEquipo)
         {
-            if (!await ConfigurarTokenAsync()) return false;
-
-            var response = await _http.PostAsJsonAsync(_baseUrl, nuevo);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error al crear equipo: {response.StatusCode} - {error}");
-            }
-            else
-            {
+                if (!await ConfigurarTokenAsync())
+                    return false;
+
+                // 🔧 CREAR FORMDATA EN LUGAR DE JSON
+                var formData = new MultipartFormDataContent();
+
+                // Agregar todos los campos como FormData
+                formData.Add(new StringContent(nuevoEquipo.NSerie ?? ""), "nserie");
+                formData.Add(new StringContent(nuevoEquipo.Nombre ?? ""), "nombre");
+                formData.Add(new StringContent(nuevoEquipo.Modelo ?? ""), "modelo");
+                formData.Add(new StringContent(nuevoEquipo.Descripcion ?? ""), "descripcion");
+                formData.Add(new StringContent(nuevoEquipo.Garantia.ToString()), "garantia");
+                formData.Add(new StringContent(nuevoEquipo.CategoriaId.ToString()), "categoriaId");
+                formData.Add(new StringContent(nuevoEquipo.UbicacionId.ToString()), "ubicacionId");
+                Console.WriteLine($"📤 Enviando FormData a: {_baseUrl}");
+
+                // 🔧 USAR PostAsync CON FORMDATA
+                var response = await _http.PostAsync(_baseUrl, formData);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error: {response.StatusCode} - {error}");
+                    return false;
+                }
+
                 Console.WriteLine("✅ Equipo creado correctamente.");
+                return true;
             }
-
-            return response.IsSuccessStatusCode;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción: {ex.Message}");
+                return false;
+            }
         }
 
+
         // 🔹 Editar equipo
-        public async Task<bool> UpdateAsync(int id, EditarEquipoDTO actualizado)
+        public async Task<bool> UpdateAsync(int id, EditarEquipoDTO equipoActualizado)
         {
-            if (!await ConfigurarTokenAsync()) return false;
-
-            var response = await _http.PutAsJsonAsync($"{_baseUrl}/{id}", actualizado);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error al editar equipo: {response.StatusCode} - {error}");
-            }
-            else
-            {
-                Console.WriteLine("✅ Equipo editado correctamente.");
-            }
+                if (!await ConfigurarTokenAsync())
+                    return false;
 
-            return response.IsSuccessStatusCode;
+                using var form = new MultipartFormDataContent();
+
+                // ✅ Agregar campos en camelCase
+                form.Add(new StringContent(equipoActualizado.Nombre ?? ""), "nombre");
+                form.Add(new StringContent(equipoActualizado.Modelo ?? ""), "modelo");
+                form.Add(new StringContent(equipoActualizado.NSerie ?? ""), "nserie");
+                form.Add(new StringContent(equipoActualizado.Descripcion ?? ""), "descripcion");
+                form.Add(new StringContent(equipoActualizado.Garantia.ToString()), "garantia");
+                form.Add(new StringContent(equipoActualizado.CategoriaId?.ToString() ?? ""), "categoriaId");
+                form.Add(new StringContent(equipoActualizado.UbicacionId?.ToString() ?? ""), "ubicacionId");
+
+                // Agregar imagen si existe
+                if (!string.IsNullOrEmpty(equipoActualizado.Img))
+                {
+                    var bytes = File.ReadAllBytes(equipoActualizado.Img);
+                    var byteContent = new ByteArrayContent(bytes);
+                    form.Add(byteContent, "imagen", Path.GetFileName(equipoActualizado.Img));
+                }
+
+                Console.WriteLine($"📤 Enviando PUT FormData a: {_baseUrl}/{id}");
+
+                var response = await _http.PutAsync($"{_baseUrl}/{id}", form);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al actualizar equipo: {response.StatusCode} - {error}");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Equipo actualizado correctamente.");
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción al actualizar equipo: {ex.Message}");
+                return false;
+            }
         }
 
         // 🔹 Eliminar equipo
         public async Task<bool> DeleteAsync(int id)
         {
-            if (!await ConfigurarTokenAsync()) return false;
-
-            var response = await _http.DeleteAsync($"{_baseUrl}/{id}");
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error al eliminar equipo: {response.StatusCode} - {error}");
-            }
-            else
-            {
-                Console.WriteLine("✅ Equipo eliminado correctamente.");
-            }
+                if (!await ConfigurarTokenAsync())
+                    return false;
 
-            return response.IsSuccessStatusCode;
+                Console.WriteLine($"🗑 Enviando DELETE a: {_baseUrl}/{id}");
+
+                var response = await _http.DeleteAsync($"{_baseUrl}/{id}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al eliminar equipo: {response.StatusCode} - {error}");
+
+                    // Manejo específico del error 409 (Conflict)
+                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    {
+                        Console.WriteLine("⚠ No se puede eliminar: El equipo tiene asignaciones activas");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("✅ Equipo eliminado correctamente.");
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción al eliminar equipo: {ex.Message}");
+                return false;
+            }
         }
     }
 }
+
+

@@ -5,7 +5,7 @@ namespace ApexMagnamentFrontend.DTOs
         public int Id { get; set; }
         public string Descripcion { get; set; } = string.Empty;
         public DateTime FechaRegistro { get; set; }
-        public int Garantia { get; set; }
+        public short Garantia { get; set; }
         public string? Img { get; set; }
         public string Modelo { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
@@ -20,7 +20,7 @@ namespace ApexMagnamentFrontend.DTOs
         public string? Modelo { get; set; }
         public string? NSerie { get; set; }
         public string? Descripcion { get; set; }
-        public int Garantia { get; set; }
+        public short Garantia { get; set; }
         public string? Img { get; set; }
         public int CategoriaId { get; set; }
         public int UbicacionId { get; set; }
@@ -33,7 +33,7 @@ namespace ApexMagnamentFrontend.DTOs
         public string? Modelo { get; set; }
         public string? NSerie { get; set; }
         public string? Descripcion { get; set; }
-        public int Garantia { get; set; }
+        public short Garantia { get; set; }
         public string? Img { get; set; }
         public int? CategoriaId { get; set; }
         public int? UbicacionId { get; set; }
