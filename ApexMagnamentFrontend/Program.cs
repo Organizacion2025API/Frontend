@@ -17,6 +17,7 @@ builder.Services.AddScoped<EquipoService>();
 builder.Services.AddScoped<ReporteCorrectivoService>();
 builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<AsignacionService>();
+builder.Services.AddScoped<SolicitudService>();
 
 
 var app = builder.Build();
