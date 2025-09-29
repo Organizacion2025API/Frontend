@@ -1,0 +1,167 @@
+﻿@page "/reportes-correctivos"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@inject ReporteCorrectivoService ReporteService
+@inject AutheService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@layout MainLayout
+
+<PageTitle>Lista de Reportes Correctivos</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Reportes Correctivos</h1>
+            </div>
+
+            @if (!estaAutenticado)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Debe iniciar sesión para ver los reportes correctivos.
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lista de Reportes</h5>
+                </div>
+                <div class="card-body">
+                    @if (cargando)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando reportes...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (reportes == null)
+                        {
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> No se pudieron cargar los reportes.
+                            </div>
+                        }
+                        else if (!reportes.Any())
+                        {
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                                <p class="mt-2">No hay reportes correctivos registrados</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Solicitud ID</th>
+                                            <th>Observación</th>
+                                            <th>Tipo Mantenimiento</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                            <th>Personal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var reporte in reportes)
+                                        {
+                                            <tr>
+                                                <td>@reporte.Id</td>
+                                                <td>@reporte.SolicitudId</td>
+                                                <td>@reporte.Observacion</td>
+                                                <td>@reporte.TipoMantenimiento</td>
+                                                <td>
+                                                    <span class="badge @(reporte.Estado == 3 ? "bg-success" : reporte.Estado == 2 ? "bg-warning text-dark" : "bg-primary")">
+                                                        @GetEstadoTexto(reporte.Estado)
+                                                    </span>
+                                                </td>
+                                                @* Manejo de fechas: si es DateTime, usa .ToShortDateString(), si es string, puedes usar Split() o dejarlo directo *@
+                                                <td>@reporte.FechaCreacion?.ToString("yyyy-MM-dd")</td>
+                                                <td>@reporte.NombrePersonal</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(reporte)">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Asegúrate de que este tipo coincida con la estructura que decidiste (e.g., ReporteCorrectivoDTO.ReporteCorrectivo)
+    private List<ReporteCorrectivoDTO.ReporteCorrectivo>? reportes;
+    private bool cargando = true;
+    private bool estaAutenticado = false;
+
+    private string GetEstadoTexto(int estado)
+    {
+        return estado switch
+        {
+            // Ajusta estos valores según la lógica de tu negocio
+            1 => "Pendiente",
+            2 => "Iniciado",
+            3 => "Finalizado", // Como se ve en tu otra imagen
+            _ => "Desconocido"
+        };
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VerificarAutenticacion();
+        await CargarReportes();
+    }
+
+    private async Task VerificarAutenticacion()
+    {
+        estaAutenticado = await AuthService.IsAuthenticated();
+        StateHasChanged();
+    }
+
+    private async Task CargarReportes()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Usamos el nuevo servicio
+            reportes = await ReporteService.ObtenerTodosLosReportesCorrectivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar reportes: {ex.Message}");
+            reportes = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void VerDetalle(ReporteCorrectivoDTO.ReporteCorrectivo reporte)
+    {
+        // Lógica para navegar a una página de detalle o abrir un modal
+        Console.WriteLine($"Ver detalle del Reporte ID: {reporte.Id}");
+        // Ejemplo: Navigation.NavigateTo($"/reportes-correctivos/{reporte.Id}");
+    }
+}
