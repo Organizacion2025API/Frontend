@@ -41,6 +41,10 @@ else
                     <td>@eq.equipoDescripcion</td>
                     <td>@eq.equipoModelo</td>
                     <td>@eq.equipoNserie</td>
+                    <td>
+                        <button class="btn btn-outline-dark mb-3" @onclick="() => IrAEliminar(eq.id)">🗑️ Eliminar</button>
+                    </td>
+
                     
                 </tr>
             }
@@ -54,8 +58,7 @@ else
     private bool cargando = true;
     private string error = string.Empty;
 
-    private bool mostrarFormulario = false;
-    private UbicacionDTO ubicacionEditar = new UbicacionDTO();
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -83,4 +86,5 @@ else
             StateHasChanged();
         }
     }
+    void IrAEliminar(int id) => NavigationManager.NavigateTo($"/asignaciones/delete/{id}");
 }

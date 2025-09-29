@@ -1,0 +1,126 @@
+﻿@page "/asignaciones/delete/{id:int}"
+@using ApexMagnamentFrontend.Components.Layout
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@inject AsignacionService asignacionService
+@inject NavigationManager NavigationManager
+@layout MainLayout
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-6 text-center">
+        <h3>Eliminar asignacion</h3>
+
+        @if (asignacion == null)
+        {
+            <p><em>Cargando detalles de la asignacion...</em></p>
+        }
+        else
+        {
+            <div class="card p-4 custom-shadow">
+                <div class="alert alert-warning" role="alert">
+                    <p>¿Estás seguro de que quieres eliminar la asignacion **@asignacion.equipoId @asignacion.equipoNombre**?</p>
+                    <p>Esta acción es irreversible.</p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0 text-start">
+                        <tbody>
+                            <tr>
+                                <td><strong>Personal asignado:</strong></td>
+                                <td>@asignacion.personalId</td>
+                            </tr>
+                            <tr>
+                                <td><strong>N serie del equipo:</strong></td>
+                                <td>@asignacion.equipoNserie</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Descripcion del equipo:</strong></td>
+                                <td>@asignacion.equipoDescripcion</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminacion">Confirmar</button>
+                    <button class="btn btn-secondary ms-2" @onclick="CancelarEliminacion">Cancelar</button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @mensajeError
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private AsignacionDTO? asignacion;
+    private string? mensajeError;
+
+    // Se cambia a OnAfterRenderAsync para evitar el error de pre-renderizado.
+    // Este método se ejecuta cuando el componente ya está en el cliente.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // El código solo se ejecuta la primera vez que se renderiza el componente
+        if (firstRender)
+        {
+            try
+            {
+                var usuarios = await asignacionService.GetAllAsync();
+                asignacion = usuarios?.FirstOrDefault(u => u.id == Id);
+
+                if (asignacion == null)
+                {
+                    mensajeError = "Usuario no encontrado.";
+                }
+            }
+            catch (Exception ex)
+            {
+                mensajeError = $"Error al obtener datos del usuario: {ex.Message}";
+            }
+            finally
+            {
+                // Vuelve a renderizar el componente para mostrar los datos del usuario.
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task ConfirmarEliminacion()
+    {
+        // Esta es la validación clave para prevenir el error.
+        // Detiene la ejecución si el objeto 'usuario' es nulo.
+        if (asignacion == null)
+        {
+            mensajeError = "No se puede eliminar un usuario nulo.";
+            StateHasChanged(); // Vuelve a renderizar para mostrar el error.
+            return;
+        }
+
+        // Esta línea ahora es segura, ya que el 'if' garantiza que 'usuario' existe.
+        var resultado = await asignacionService.DeleteAsignacionAsync(asignacion);
+
+        if (string.IsNullOrEmpty(resultado))
+        {
+            mensajeError = $"asignacion a esquipo {asignacion.equipoId} eliminado exitosamente.";
+            await Task.Delay(2000);
+            NavigationManager.NavigateTo("/asignacionEquipo");
+        }
+        else
+        {
+            mensajeError = resultado;
+        }
+    }
+
+    private void CancelarEliminacion()
+    {
+        NavigationManager.NavigateTo("/asignacionEquipo");
+    }
+}

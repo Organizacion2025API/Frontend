@@ -1,5 +1,6 @@
 ﻿using ApexMagnamentFrontend.DTOs;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 namespace ApexMagnamentFrontend.Services
@@ -92,24 +93,35 @@ namespace ApexMagnamentFrontend.Services
         }
 
         // 🔹 Eliminar asignacion
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<string> DeleteAsignacionAsync(AsignacionDTO asignacion)
         {
-            if (!await ConfigurarTokenAsync()) return false;
-
-            var response = await _http.DeleteAsync($"{_baseUrl}/{id}");
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error al eliminar la asignacion: {response.StatusCode} - {error}");
-            }
-            else
-            {
-                Console.WriteLine("✅ asignacion eliminada correctamente.");
-            }
+                // Asegura que tienes el token antes de hacer la solicitud.
+                if (!await ConfigurarTokenAsync())
+                {
+                    return "Error: No hay sesión activa. Por favor, inicie sesión.";
+                }
 
-            return response.IsSuccessStatusCode;
+                // Realiza la solicitud DELETE a la API, usando el Id del usuario.
+                var response = await _http.DeleteAsync($"{_baseUrl}/{asignacion.id}");
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // La eliminación fue exitosa.
+                    return null;
+                }
+
+                // Retorna el mensaje de error si la solicitud no fue exitosa.
+                return $"Error {(int)response.StatusCode}: {responseContent}";
+            }
+            catch (Exception ex)
+            {
+                // Captura cualquier excepción de red o de otro tipo.
+                return $"Error de conexión: {ex.Message}";
+            }
         }
-
     }
 }
