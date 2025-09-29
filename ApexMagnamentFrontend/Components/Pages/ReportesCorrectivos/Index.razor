@@ -26,6 +26,23 @@
                 </div>
             }
 
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       placeholder="Buscar por ID del reporte..."
+                                       @bind="filtroBusqueda" 
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Lista de Reportes</h5>
@@ -48,11 +65,12 @@
                                 <strong>Error:</strong> No se pudieron cargar los reportes.
                             </div>
                         }
-                        else if (!reportes.Any())
+                        @* Usamos ReportesFiltrados.Count() *@
+                        else if (!ReportesFiltrados.Any())
                         {
                             <div class="text-center text-muted">
                                 <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
-                                <p class="mt-2">No hay reportes correctivos registrados</p>
+                                <p class="mt-2">@((!string.IsNullOrEmpty(filtroBusqueda) && reportes.Any()) ? $"No se encontraron reportes con ID: {filtroBusqueda}" : "No hay reportes correctivos registrados")</p>
                             </div>
                         }
                         else
@@ -72,7 +90,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var reporte in reportes)
+                                        @*  Recorremos ReportesFiltrados *@
+                                        @foreach (var reporte in ReportesFiltrados)
                                         {
                                             <tr>
                                                 <td>@reporte.Id</td>
@@ -84,7 +103,6 @@
                                                         @GetEstadoTexto(reporte.Estado)
                                                     </span>
                                                 </td>
-                                                @* Manejo de fechas: si es DateTime, usa .ToShortDateString(), si es string, puedes usar Split() o dejarlo directo *@
                                                 <td>@reporte.FechaCreacion?.ToString("yyyy-MM-dd")</td>
                                                 <td>@reporte.NombrePersonal</td>
                                                 <td>
@@ -106,23 +124,30 @@
 </div>
 
 @code {
-    // Asegúrate de que este tipo coincida con la estructura que decidiste (e.g., ReporteCorrectivoDTO.ReporteCorrectivo)
     private List<ReporteCorrectivoDTO.ReporteCorrectivo>? reportes;
     private bool cargando = true;
     private bool estaAutenticado = false;
+    
+    // Variable para el filtro (string, para manejar el valor del input type="number")
+    private string filtroBusqueda = string.Empty;
+
+    // Propiedad calculada para aplicar el filtro
+    private IEnumerable<ReporteCorrectivoDTO.ReporteCorrectivo> ReportesFiltrados => 
+        string.IsNullOrWhiteSpace(filtroBusqueda)
+        ? reportes ?? Enumerable.Empty<ReporteCorrectivoDTO.ReporteCorrectivo>()
+        : reportes.Where(r => r.Id.ToString().Contains(filtroBusqueda));
+
 
     private string GetEstadoTexto(int estado)
     {
         return estado switch
         {
-            // Ajusta estos valores según la lógica de tu negocio
             1 => "Pendiente",
             2 => "Iniciado",
-            3 => "Finalizado", // Como se ve en tu otra imagen
+            3 => "Finalizado",
             _ => "Desconocido"
         };
     }
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -143,7 +168,6 @@
 
         try
         {
-            // Usamos el nuevo servicio
             reportes = await ReporteService.ObtenerTodosLosReportesCorrectivosAsync();
         }
         catch (Exception ex)
@@ -160,8 +184,6 @@
 
     private void VerDetalle(ReporteCorrectivoDTO.ReporteCorrectivo reporte)
     {
-        // Lógica para navegar a una página de detalle o abrir un modal
         Console.WriteLine($"Ver detalle del Reporte ID: {reporte.Id}");
-        // Ejemplo: Navigation.NavigateTo($"/reportes-correctivos/{reporte.Id}");
     }
 }
