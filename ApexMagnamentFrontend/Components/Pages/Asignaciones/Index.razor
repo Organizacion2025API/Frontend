@@ -1,0 +1,86 @@
+﻿@page "/asignacionEquipo"
+@using ApexMagnamentFrontend.Components.Layout
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@inject NavigationManager NavigationManager
+@inject AsignacionService asignacionService
+@layout MainLayout
+
+<h3> Lista de asignaciones</h3>
+
+
+@if (asignaciones == null)
+{
+    <p>⏳ Cargando asignaciones...</p>
+}
+else if (!asignaciones.Any())
+{
+    <p>No hay asignaciones registradas.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>PersonalId</th>
+                <th>equipoId</th>
+                <th>Nombre equipo</th>
+                <th>Descripcion</th>
+                <th>Modelo</th>
+                <th>N serie</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var eq in asignaciones)
+            {
+                <tr>
+                    <td>@eq.personalId</td>
+                    <td>@eq.equipoId</td>
+                    <td>@eq.equipoNombre</td>
+                    <td>@eq.equipoDescripcion</td>
+                    <td>@eq.equipoModelo</td>
+                    <td>@eq.equipoNserie</td>
+                    
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<AsignacionDTO> asignaciones  = new();
+
+    private bool cargando = true;
+    private string error = string.Empty;
+
+    private bool mostrarFormulario = false;
+    private UbicacionDTO ubicacionEditar = new UbicacionDTO();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CargarAsignaciones();
+        }
+    }
+    private async Task CargarAsignaciones()
+    {
+        try
+        {
+            Console.WriteLine("📡 Intentando cargar ubicaciones...");
+            asignaciones = await asignacionService.GetAllAsync();
+            Console.WriteLine($"✅ Se cargaron {asignaciones.Count} ubicaciones.");
+        }
+        catch (Exception ex)
+        {
+            error = $"❌ Error cargando ubicaciones: {ex.Message}";
+            Console.WriteLine(error);
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+}

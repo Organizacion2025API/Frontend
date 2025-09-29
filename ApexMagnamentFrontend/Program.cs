@@ -16,6 +16,7 @@ builder.Services.AddScoped<UbicacionService>();
 builder.Services.AddScoped<EquipoService>();
 
 builder.Services.AddScoped<CategoriaService>();
+builder.Services.AddScoped<AsignacionService>();
 
 
 var app = builder.Build();
