@@ -3,6 +3,7 @@
 @using ApexMagnamentFrontend.Services
 @using ApexMagnamentFrontend.Components.Layout
 @inject ReporteCorrectivoService ReporteService
+@inject SolicitudService SolicitudService
 @inject NavigationManager Navigation
 
 @layout MainLayout
@@ -87,34 +88,37 @@
     private bool esExito = false;
     private string mensajeEstado = string.Empty;
 
-    // Asegúrate de tener estas referencias en el DTO para que DataAnnotationsValidator funcione
-    // using System.ComponentModel.DataAnnotations;
+   
 
     private async Task ManejarCreacionReporte()
+{
+    cargando = true;
+    mensajeEstado = string.Empty;
+    StateHasChanged();
+
+    var (exito, mensaje) = await ReporteService.CrearReporteCorrectivoAsync(reporteCreacion);
+
+    if (exito)
     {
-        cargando = true;
-        mensajeEstado = string.Empty;
-        StateHasChanged();
-
-        var (exito, mensaje) = await ReporteService.CrearReporteCorrectivoAsync(reporteCreacion);
-
-        cargando = false;
-        esExito = exito;
-        mensajeEstado = mensaje;
-
-        if (exito)
-        {
-            // Opcional: Reiniciar el formulario o redirigir
-            // Redirigir a la lista de reportes después de 2 segundos.
-            await Task.Delay(2000);
-            Navigation.NavigateTo("/reportes-correctivos");
-        }
-        else
-        {
-            // Mantiene el formulario para corregir errores si la API devuelve detalles
-            StateHasChanged();
-        }
+        // Cambiamos el estado de la solicitud a "Finalizado" (3)
+            await SolicitudService.ActualizarEstadoSolicitudAsync(reporteCreacion.SolicitudId, 3);
     }
+
+    cargando = false;
+    esExito = exito;
+    mensajeEstado = mensaje;
+
+    if (exito)
+    {
+        await Task.Delay(2000);
+        Navigation.NavigateTo("/reportes-correctivos");
+    }
+    else
+    {
+        StateHasChanged();
+    }
+}
+
 
     private void Volver()
     {

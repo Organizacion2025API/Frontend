@@ -115,9 +115,9 @@
                                                 <td>@solicitud.FechaRegistro?.ToString("yyyy-MM-dd HH:mm")</td>
                                                 <td>@solicitud.AsignacionEquipoId</td>
                                                 <td>@solicitud.PersonalId</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(solicitud)">
-                                                        <i class="bi bi-eye"></i>
+                                                <td>                                                    
+                                                    <button class="btn btn-sm btn-success ms-1" @onclick="() => NavegarACrearReporte(solicitud.Id)">
+                                                        <i class="bi bi-plus-circle"></i> Reporte
                                                     </button>
                                                 </td>
                                             </tr>
@@ -223,11 +223,11 @@
             StateHasChanged();
         }
     }
-
-    private void VerDetalle(SolicitudDTO.Solicitud solicitud)
+    
+    private void NavegarACrearReporte(int solicitudId)
     {
-        // Navegación al detalle. Ejemplo: /solicitudes/123
-        Navigation.NavigateTo($"/solicitudes/{solicitud.Id}");
+        //  Pasamos el id por querystring
+        Navigation.NavigateTo($"/reportes-correctivos/crear?solicitudId={solicitudId}");
     }
 
     private void NavegarACrearSolicitud()

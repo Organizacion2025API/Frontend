@@ -72,5 +72,20 @@ namespace ApexMagnamentFrontend.Services
                 return new List<Solicitud>();
             }
         }
+
+        public async Task<bool> ActualizarEstadoSolicitudAsync(int idSolicitud, short nuevoEstado)
+        {
+            var url = $"api/solicitudes/{idSolicitud}/estado";
+
+            var payload = new
+            {
+                id = idSolicitud,
+                estado = nuevoEstado
+            };
+
+            var response = await _httpClient.PutAsJsonAsync(url, payload);
+            return response.IsSuccessStatusCode;
+        }
+
     }
 }
