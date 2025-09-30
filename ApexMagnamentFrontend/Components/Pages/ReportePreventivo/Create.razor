@@ -1,0 +1,123 @@
+﻿@page "/reportes-preventivo/crear"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@inject ReportePreventivoService ReporteService
+@inject NavigationManager Navigation
+
+@layout MainLayout
+
+<PageTitle>Crear Nuevo Reporte Preventivo</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Crear Nuevo Reporte Preventivo</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Datos del Reporte</h5>
+                </div>
+                <div class="card-body">
+
+                    @*  Muestra el mensaje de estado (éxito/error) *@
+                    @if (!string.IsNullOrEmpty(mensajeEstado))
+                    {
+                        <div class="alert @(esExito ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+                            @mensajeEstado
+                            <button type="button" class="btn-close" @onclick="() => mensajeEstado = string.Empty"></button>
+                        </div>
+                    }
+
+                    @*  Formulario Blazor para validación y envío *@
+                    <EditForm Model="@reporteCreacion" OnValidSubmit="@ManejarCreacionReporte">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="calendarioId" class="form-label">ID de Solicitud</label>
+                            <InputNumber id="calendarioId" @bind-Value="reporteCreacion.CalendarioPreventivoId" class="form-control" placeholder="Ingrese el ID del calendario preventivo" required />
+                            <ValidationMessage For="@(() => reporteCreacion.CalendarioPreventivoId)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipoMantenimiento" class="form-label">Tipo de Mantenimiento</label>
+                            <InputNumber id="tipoMantenimiento" @bind-Value="reporteCreacion.tipoMantenimiento" class="form-control" placeholder="Ingrese el tipo (ej: 1 o 2)" required />
+                            <ValidationMessage For="@(() => reporteCreacion.tipoMantenimiento)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="observacion" class="form-label">Observación</label>
+                            <InputTextArea id="observacion" @bind-Value="reporteCreacion.observacion" class="form-control" rows="3" placeholder="Detalles de la observación o acción correctiva" required />
+                            <ValidationMessage For="@(() => reporteCreacion.observacion)" />
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" @onclick="Volver">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" disabled="@cargando">
+                                @if (cargando)
+                                {
+                                    <span>
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Creando...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        <i class="bi bi-send"></i>
+                                        Crear Reporte
+                                    </span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Usamos el DTO específico para la creación
+    private ReportePreventivoDTO.ReportePreventivoCreacionDTO reporteCreacion = new();
+    private bool cargando = false;
+    private bool esExito = false;
+    private string mensajeEstado = string.Empty;
+
+    // Asegúrate de tener estas referencias en el DTO para que DataAnnotationsValidator funcione
+    // using System.ComponentModel.DataAnnotations;
+
+    private async Task ManejarCreacionReporte()
+    {
+        cargando = true;
+        mensajeEstado = string.Empty;
+        StateHasChanged();
+
+        var (exito, mensaje) = await ReporteService.CrearReportereventivoAsync(reporteCreacion);
+
+        cargando = false;
+        esExito = exito;
+        mensajeEstado = mensaje;
+
+        if (exito)
+        {
+            // Opcional: Reiniciar el formulario o redirigir
+            // Redirigir a la lista de reportes después de 2 segundos.
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/reportes-preventivos");
+        }
+        else
+        {
+            // Mantiene el formulario para corregir errores si la API devuelve detalles
+            StateHasChanged();
+        }
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/reportes-preventivos");
+    }
+}

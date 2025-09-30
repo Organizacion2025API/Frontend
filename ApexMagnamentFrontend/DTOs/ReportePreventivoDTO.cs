@@ -16,5 +16,17 @@
 
         }
 
+
+        public class ReportePreventivoCreacionDTO
+        {
+
+            public int Id { get; set; }
+            public int CalendarioPreventivoId { get; set; }
+            public string? observacion { get; set; }
+            public short tipoMantenimiento { get; set; }    // ✅ Corregido a short
+           
+
+        }
+
     }
 }

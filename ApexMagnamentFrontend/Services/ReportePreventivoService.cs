@@ -1,9 +1,9 @@
 ﻿using ApexMagnamentFrontend.DTOs;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using static ApexMagnamentFrontend.DTOs.ReportePreventivoDTO;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Text; // Necesario para StringContent
+using System.Text.Json;
+using static ApexMagnamentFrontend.DTOs.ReportePreventivoDTO;
 
 namespace ApexMagnamentFrontend.Services
 {
@@ -69,7 +69,48 @@ namespace ApexMagnamentFrontend.Services
             }
         }
 
+        // MÉTODO Crear reporte correctivo
+        public async Task<(bool Exito, string Mensaje)> CrearReportereventivoAsync(ReportePreventivoCreacionDTO reporteCreacion)
+        {
+            try
+            {
+                if (!await ConfigurarTokenAsync())
+                    return (false, "Error de autenticación. Inicie sesión nuevamente.");
 
+                Console.WriteLine($"📤 Enviando reporte para calendario preventivo: {reporteCreacion.CalendarioPreventivoId}");
+                Console.WriteLine($"🔧 Tipo de mantenimiento: {reporteCreacion.tipoMantenimiento}");
+
+                // ✅ PostAsJsonAsync es correcto para esta API
+                var response = await _httpClient.PostAsJsonAsync(_baseUrl, reporteCreacion);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"✅ Reporte creado exitosamente. Código: {response.StatusCode}");
+                    return (true, "Reporte Correctivo creado exitosamente.");
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Error al crear reporte. Código: {response.StatusCode}");
+                    Console.WriteLine($"📋 Detalle del error: {errorContent}");
+
+                    // Manejo específico de errores comunes
+                    return response.StatusCode switch
+                    {
+                        System.Net.HttpStatusCode.BadRequest => (false, $"Datos inválidos: {errorContent}"),
+                        System.Net.HttpStatusCode.NotFound => (false, "Solicitud no encontrada"),
+                        System.Net.HttpStatusCode.Conflict => (false, "Ya existe un reporte para esta solicitud"),
+                        System.Net.HttpStatusCode.Forbidden => (false, "Sin permisos para crear reportes"),
+                        _ => (false, $"Error {response.StatusCode}: {errorContent}")
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción al crear reporte: {ex.Message}");
+                return (false, $"Error de conexión: {ex.Message}");
+            }
+        }
     }
 }
 
