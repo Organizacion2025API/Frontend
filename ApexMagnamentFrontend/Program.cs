@@ -15,6 +15,7 @@ builder.Services.AddScoped<AutheService>();
 builder.Services.AddScoped<UbicacionService>();
 builder.Services.AddScoped<EquipoService>();
 builder.Services.AddScoped<ReporteCorrectivoService>();
+builder.Services.AddScoped<ReportePreventivoService>();
 builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<AsignacionService>();
 builder.Services.AddScoped<SolicitudService>();

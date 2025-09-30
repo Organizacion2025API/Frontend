@@ -1,0 +1,231 @@
+﻿@page "/reportes-preventivos"
+@using ApexMagnamentFrontend.DTOs
+@using ApexMagnamentFrontend.Services
+@using ApexMagnamentFrontend.Components.Layout
+@inject ReportePreventivoService ReporteService
+@inject AutheService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@layout MainLayout
+
+<PageTitle>Lista de Reportes Preventivos</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Reportes preventivos</h1>
+
+                @* BOTÓN: Dirige a la página de creación *@
+                <button class="btn btn-success" @onclick="NavegarACrearReporte">
+                    <i class="bi bi-plus-circle"></i> Crear Reporte
+                </button>
+            </div>
+
+            @if (!estaAutenticado)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Debe iniciar sesión para ver los reportes preventivos.
+                </div>
+            }
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        @* 💡 FILTRO POR ID (Lado Izquierdo) *@
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                <input type="number"
+                                       class="form-control"
+                                       placeholder="Buscar por ID del reporte..."
+                                       @bind="filtroBusquedaId"
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+
+                        @* 💡 NUEVO FILTRO POR TIPO DE MANTENIMIENTO (Lado Derecho) *@
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-tools"></i></span>
+                                <input type="number"
+                                       class="form-control"
+                                       placeholder="Buscar por Tipo Mantenimiento (ej: 1 o 2)..."
+                                       @bind="filtroBusquedaTipoMantenimiento"
+                                       @bind:event="oninput" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lista de Reportes</h5>
+                </div>
+                <div class="card-body">
+                    @if (cargando)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando reportes...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (reportes == null)
+                        {
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> No se pudieron cargar los reportes.
+                            </div>
+                        }
+                        else if (!ReportesFiltrados.Any())
+                        {
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                                <p class="mt-2">No se encontraron reportes que coincidan con los filtros.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>calendario Preventivo ID</th>
+                                            <th>Observación</th>
+                                            <th>Tipo Mantenimiento</th>
+                                            <th>Estado</th>
+                                            <th>fechaAtencion</th>
+                                            <th>nombrePersonal</th>
+                                            <th>equipoId</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @* Recorremos ReportesFiltrados *@
+                                        @foreach (var reporte in ReportesFiltrados)
+                                        {
+                                            <tr>
+                                                <td>@reporte.Id</td>
+                                                <td>@reporte.CalendarioPreventivoId</td>
+                                                <td>@reporte.observacion</td>
+                                                <td>@reporte.tipoMantenimiento</td>
+                                                <td>
+                                                    <span class="badge @(reporte.estado == 3 ? "bg-success" : reporte.estado == 2 ? "bg-warning text-dark" : "bg-primary")">
+                                                        @GetEstadoTexto(reporte.estado)
+                                                    </span>
+                                                </td>
+                                                <td>@reporte.fechaAtencion?.ToString("yyyy-MM-dd")</td>
+                                                <td>@reporte.NombrePersonal</td>
+                                                <td>@reporte.equipoId</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info" @onclick="() => VerDetalle(reporte)">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ReportePreventivoDTO.ReportePreventivo>? reportes;
+    private bool cargando = true;
+    private bool estaAutenticado = false;
+
+    private string filtroBusquedaId = string.Empty;
+    private string filtroBusquedaTipoMantenimiento = string.Empty;
+
+    private IEnumerable<ReportePreventivoDTO.ReportePreventivo> ReportesFiltrados
+    {
+        get
+        {
+            var consulta = reportes ?? Enumerable.Empty<ReportePreventivoDTO.ReportePreventivo>();
+
+            // Filtro por ID
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaId))
+            {
+                consulta = consulta.Where(r => r.Id.ToString().Contains(filtroBusquedaId));
+            }
+
+            // Filtro por Tipo de Mantenimiento
+            if (!string.IsNullOrWhiteSpace(filtroBusquedaTipoMantenimiento))
+            {
+                consulta = consulta.Where(r => r.tipoMantenimiento.ToString().Contains(filtroBusquedaTipoMantenimiento));
+            }
+
+            return consulta;
+        }
+    }
+
+
+    private string GetEstadoTexto(int estado)
+    {
+        return estado switch
+        {
+            1 => "Pendiente",
+            2 => "Iniciado",
+            3 => "Finalizado",
+            _ => "Desconocido"
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VerificarAutenticacion();
+        await CargarReportes();
+    }
+
+    private async Task VerificarAutenticacion()
+    {
+        estaAutenticado = await AuthService.IsAuthenticated();
+        StateHasChanged();
+    }
+
+    private async Task CargarReportes()
+    {
+        cargando = true;
+        try
+        {
+            reportes = await ReporteService.ObtenerTodosLosReportesPreventivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar reportes: {ex.Message}");
+            // Si hay un error, el servicio debería lanzar una excepción,
+            // no devolver una lista vacía.
+            reportes = null; // Asignamos null para activar el mensaje de error en la vista
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void VerDetalle(ReportePreventivoDTO.ReportePreventivo reporte)
+    {
+        Console.WriteLine($"Ver detalle del Reporte ID: {reporte.Id}");
+    }
+
+    // NUEVO MÉTODO para navegar a la página de creación
+    private void NavegarACrearReporte()
+    {
+        Navigation.NavigateTo("/reportes-correctivos/crear");
+    }
+}
+
