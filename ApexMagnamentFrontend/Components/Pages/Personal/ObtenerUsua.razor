@@ -7,32 +7,127 @@
 @layout MainLayout
 
 <style>
-    .custom-shadow {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        border-radius: 10px;
-        padding: 20px;
-        background-color: #ffffff;
-        transition: transform 0.2s ease-in-out;
-        margin-top: 20px;
+    /* Estilos generales para el contenedor principal */
+    .container-fluid {
+        padding: 2rem;
     }
 
-        .custom-shadow:hover {
-            transform: translateY(-3px);
+    /* Estilo del card principal que contiene los filtros y la tabla */
+    .card {
+        border-radius: 0.75rem;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+        border-top-left-radius: 0.75rem;
+        border-top-right-radius: 0.75rem;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Estilos para el filtro de búsqueda */
+    .input-group-text {
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        border-right: none;
+    }
+
+    .form-control {
+        border-left: none;
+    }
+
+    /* Estilos de la tabla */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+        .table thead th {
+            background-color: #343a40; /* Color de fondo oscuro para el encabezado */
+            color: white; /* Texto blanco para el encabezado */
+            font-weight: 600;
+            vertical-align: middle;
+            border-bottom: none; /* Eliminar el borde inferior del encabezado */
         }
 
-    .table th,
-    .table td {
-        vertical-align: middle;
+        .table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+            .table tbody tr:hover {
+                background-color: #f1f1f1; /* Color de fondo al pasar el mouse */
+            }
+
+        .table td, .table th {
+            vertical-align: middle;
+        }
+
+    /* Estilos para el estado del usuario */
+    .badge-status {
+        font-size: 0.85em;
+        font-weight: 600;
+        padding: 0.4em 0.8em;
+        border-radius: 1rem;
     }
 
-    .table thead {
-        background-color: #f8f9fa;
+    .badge-active {
+        background-color: #28a745; /* Verde */
+        color: white;
     }
 
-    .card-title {
-        margin-bottom: 20px;
-        font-weight: bold;
+    .badge-inactive {
+        background-color: #dc3545; /* Rojo */
+        color: white;
     }
+
+    /* Estilos de botones */
+    .btn-outline-dark,
+    .btn-success {
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .btn-outline-dark:hover {
+            background-color: #343a40;
+            color: white;
+        }
+
+    /* Estilos para el modal, mejorando el diseño del modal */
+    .modal-content-custom {
+        border-radius: 1rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
+    .table th, .table td {
+        white-space: nowrap; /* Evita que el texto de las celdas se parta en varias líneas */
+    }
+
+        /* Ajusta el ancho de columnas específicas */
+        .table th:nth-child(2), .table td:nth-child(2) {
+            width: 80px; /* Ancho para ID */
+        }
+
+        .table th:nth-child(9), .table td:nth-child(9) {
+            width: 120px; /* Ancho para Fecha de Ingreso */
+        }
+
+        .table th:nth-child(10), .table td:nth-child(10) {
+            width: 120px; /* Ancho para Fecha de Sesión */
+        }
 
     /* Estilos para el modal */
     .modal-background {
@@ -45,83 +140,131 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1050; /* Z-index de un modal de Bootstrap */
+        z-index: 1050; /* Esto asegura que el modal esté por encima de todo */
     }
 
     .modal-content-custom {
         background-color: white;
         padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 1rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         width: 90%;
         max-width: 600px;
     }
+
+    .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
 </style>
 
-<h3>Lista de Usuarios</h3>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Gestión de Usuarios</h1>
+                <div class="d-flex align-items-center">
+                    <div class="col-sm-auto me-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text"
+                                   class="form-control"
+                                   @bind="filtroBusqueda"
+                                   @bind:event="oninput"
+                                   placeholder="Buscar ID o nombre..." />
+                        </div>
+                    </div>
+                    <button class="btn btn-success" @onclick="IrACrear">
+                        <i class="bi bi-person-plus-fill"></i> Nuevo Personal
+                    </button>
+                </div>
+            </div>
 
-@if (!string.IsNullOrEmpty(error))
-{
-    <div class="alert alert-danger" role="alert">
-        @error
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lista de Personal</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(error))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @error
+                        </div>
+                    }
+
+                    @if (cargando)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando usuarios...</p>
+                        </div>
+                    }
+                    else if (usuariosFiltrados == null || !usuariosFiltrados.Any())
+                    {
+                        <div class="text-center text-muted">
+                            <i class="bi bi-people" style="font-size: 3rem;"></i>
+                            <p class="mt-2">No se encontraron usuarios que coincidan con la búsqueda.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Apellido</th>
+                                        <th>Teléfono</th>
+                                        <th>Correo Electrónico</th>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Status</th>
+                                        <th>Fecha de Ingreso</th>
+                                        <th>Última Sesión</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var usuario in usuariosFiltrados)
+                                    {
+                                        <tr>
+                                            <td>@usuario.id</td>
+                                            <td>@usuario.nombre</td>
+                                            <td>@usuario.apellido</td>
+                                            <td>@usuario.telefono</td>
+                                            <td>@usuario.correo</td>
+                                            <td>@usuario.user</td>
+                                            <td>@usuario.rolId</td>
+                                            <td>
+                                                <span class="badge badge-status @(usuario.status == 1 ? "badge-active" : "badge-inactive")">
+                                                    @(usuario.status == 1 ? "Activo" : "Inactivo")
+                                                </span>
+                                            </td>
+                                            <td>@usuario.fechaIngreso?.ToShortDateString()</td>
+                                            <td>@usuario.fechaSession?.ToShortDateString()</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-info" @onclick="@(() => EditarUsuario(usuario))">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
-}
-
-@* Filtro de búsqueda *@
-<div class="col-sm-6 col-md-4 col-lg-3">
-    <label for="filtro">Buscar usuario por ID o nombre:</label>
-    <input type="text" class="form-control" @bind="filtroBusqueda" @bind:event="oninput" placeholder="Escribe ID o nombre..." />
 </div>
-
-@if (cargando)
-{
-    <p><em>Cargando usuarios...</em></p>
-}
-else if (usuariosFiltrados == null || !usuariosFiltrados.Any())
-{
-    <p><em>No se encontraron usuarios que coincidan con la búsqueda.</em></p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Acciones</th>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Teléfono</th>
-                <th>Correo Electrónico</th>
-                <th>Usuario</th>
-                <th>Status</th>
-                <th>Fecha de Ingreso</th>
-                <th>Fecha de Sesión</th>
-                <th>Rol</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var usuario in usuariosFiltrados)
-            {
-                <tr>
-                    <td>
-                        <button class="btn btn-outline-dark me-2" @onclick="@(() => EditarUsuario(usuario))">Acciones</button>
-                    </td>
-                    <td>@usuario.id</td>
-                    <td>@usuario.nombre</td>
-                    <td>@usuario.apellido</td>
-                    <td>@usuario.telefono</td>
-                    <td>@usuario.correo</td>
-                    <td>@usuario.user</td>
-                    <td>@usuario.status</td>
-                    <td>@usuario.fechaIngreso?.ToShortDateString()</td>
-                    <td>@usuario.fechaSession?.ToShortDateString()</td>
-                    <td>@usuario.rolId</td>
-                   
-                </tr>
-            }
-        </tbody>
-    </table>
-}
 
 @* Formulario de Edición en una ventana flotante (Modal) *@
 @if (mostrarModal)
@@ -158,11 +301,9 @@ else
                         <InputText class="form-control" id="user" @bind-Value="usuarioEditar.user" />
                     </div>
 
-                    <button type="submit" class="btn btn-success">Editar</button>
+                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
                     <button type="button" class="btn btn-secondary ms-2" @onclick="CerrarModal">Cancelar</button>
                     <button type="button" class="btn btn-danger ms-2" @onclick="@(() => EliminarUsuario(usuarioEditar.id))">Eliminar</button>
-
-
                 </EditForm>
             </div>
         </div>
@@ -293,4 +434,6 @@ else
         CerrarModal(); // Cierra el modal antes de la redirección
         NavigationManager.NavigateTo($"/EliminarUsu/{id}");
     }
+
+    void IrACrear() => NavigationManager.NavigateTo("/createUser");
 }

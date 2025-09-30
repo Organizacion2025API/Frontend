@@ -8,18 +8,18 @@
 
 @layout MainLayout
 
-<PageTitle>Crear Nuevo Reporte Correctivo</PageTitle>
+<PageTitle>Crear Nueva asignacion</PageTitle>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Crear Nuevo Reporte Correctivo</h1>
+                <h1>Crear Nueva asignacion</h1>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Datos del Reporte</h5>
+                    <h5 class="mb-0">Datos de asignacion</h5>
                 </div>
                 <div class="card-body">
 
@@ -43,7 +43,7 @@
                             <ValidationMessage For="@(() => asignacionCreacion.EquipoId)" />
                         </div>
                         <div class="mb-3">
-                            <label for="personalId" class="form-label">ID de equipo</label>
+                            <label for="personalId" class="form-label">ID de personal</label>
                             <InputNumber id="personalId" @bind-Value="asignacionCreacion.PersonalId" class="form-control" placeholder="Ingrese el ID del personal" required />
                             <ValidationMessage For="@(() => asignacionCreacion.PersonalId)" />
                         </div>
